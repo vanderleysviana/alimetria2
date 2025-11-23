@@ -5,43 +5,48 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const supabaseUrl = 'https://unkjvedlsesjufplblgd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVua2p2ZWRsc2VzanVmcGxibGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2OTI0MTcsImV4cCI6MjA3OTI2ODQxN30.KIotfwLq5OcNQerpr2fcBUh2AO_invnj9YoeJPyoGss';
 
-// Criar e exportar o cliente Supabase
-export const supabase = createClient(supabaseUrl, supabaseKey)
+// Criar cliente Supabase
+const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Função auxiliar para garantir autenticação
+// Exportar como default e named
+export default supabase
+export { supabase }
+
+// Função de autenticação melhorada
 export async function ensureAuth() {
   try {
     const { data: { session }, error } = await supabase.auth.getSession()
+    
     if (error) {
       console.error('Erro ao obter sessão:', error)
-      throw error
+      // Retornar null em vez de lançar erro para evitar quebra da aplicação
+      return null
     }
     
-    if (!session) {
-      console.log('Nenhuma sessão encontrada, tentando autenticação anônima...')
-      const { data, error: signInError } = await supabase.auth.signInAnonymously()
-      if (signInError) {
-        console.error('Erro na autenticação anônima:', signInError)
-        throw signInError
-      }
-      return data.session
+    if (session) {
+      console.log('✅ Sessão encontrada:', session.user.id)
+      return session
     }
     
-    return session
+    console.log('ℹ️ Nenhuma sessão ativa')
+    return null
+    
   } catch (error) {
     console.error('Erro em ensureAuth:', error)
-    throw error
+    return null
   }
 }
 
-// Função para obter usuário atual
 export async function getCurrentUser() {
   try {
     const { data: { user }, error } = await supabase.auth.getUser()
-    if (error) throw error
+    if (error) {
+      console.error('Erro ao obter usuário:', error)
+      return null
+    }
     return user
   } catch (error) {
     console.error('Erro ao obter usuário:', error)
-    throw error
+    return null
   }
 }
