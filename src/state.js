@@ -1,5 +1,5 @@
-// src/state.js - VERSÃO COMPLETA ATUALIZADA
-import { supabase } from './supabase.js';
+// src/state.js - ATUALIZAR IMPORT
+import supabase from './supabase.js'; 
 
 export const MEALS = [
   "Café da manhã", "Lanche da manhã", "Almoço", "Lanche da tarde", "Jantar", "Ceia"
