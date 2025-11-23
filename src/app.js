@@ -1,10 +1,10 @@
-// src/app.js - VERSÃO CORRIGIDA
+// src/app.js - VERSÃO CORRIGIDA SEM AUTENTICAÇÃO ANÔNIMA
 import { nanoid } from "nanoid";
 import { jsPDF } from "jspdf";
 import Chart from "chart.js/auto";
 
 import { state, MEALS, loadPatientsFromDB } from './state.js';
-import { supabase } from './supabase.js';
+import supabase, { ensureAuth, getCurrentUser } from './supabase.js';
 import './tacoLoader.js';
 import './ui.js';
 import './modals.js';
@@ -19,50 +19,24 @@ async function initAuth() {
   try {
     console.log('🔐 Iniciando autenticação...');
     
-    // Check current session
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error('❌ Erro ao obter sessão:', error);
-      throw error;
-    }
+    // Tentar obter sessão existente
+    const session = await ensureAuth();
     
     if (session) {
       currentUser = session.user;
-      console.log('✅ Usuário logado:', currentUser.id);
-      await loadInitialData();
+      console.log('✅ Usuário autenticado:', currentUser.id);
     } else {
-      // If no session, try to sign in anonymously
-      console.log('🔑 Tentando autenticação anônima...');
-      await signInAnonymously();
+      console.log('ℹ️ Modo offline/local - sem autenticação');
+      // Continuar sem autenticação para desenvolvimento
+      currentUser = { id: 'local-user' };
     }
+    
+    await loadInitialData();
+    
   } catch (error) {
     console.error('❌ Erro na inicialização da autenticação:', error);
-    // Continuar mesmo com erro de auth para desenvolvimento
-    await loadInitialData();
-  }
-}
-
-// Sign in anonymously
-async function signInAnonymously() {
-  try {
-    const { data, error } = await supabase.auth.signInAnonymously();
-    
-    if (error) {
-      console.error('❌ Erro com autenticação anônima:', error);
-      // Em caso de erro, continuar sem autenticação para desenvolvimento
-      console.log('🚀 Continuando em modo de desenvolvimento...');
-      await loadInitialData();
-      return;
-    }
-    
-    currentUser = data.user;
-    console.log('✅ Usuário anônimo criado:', currentUser.id);
-    await loadInitialData();
-    
-  } catch (error) {
-    console.error('❌ Erro fatal na autenticação:', error);
-    // Continuar mesmo com erro para desenvolvimento
+    // Continuar em modo offline
+    currentUser = { id: 'local-user' };
     await loadInitialData();
   }
 }
@@ -89,8 +63,8 @@ supabase.auth.onAuthStateChange((event, session) => {
     console.log('✅ Usuário autenticado:', currentUser.id);
     loadInitialData();
   } else if (event === 'SIGNED_OUT') {
-    currentUser = null;
-    console.log('🚪 Usuário deslogado');
+    currentUser = { id: 'local-user' };
+    console.log('🚪 Usuário deslogado - modo local');
   }
 });
 
@@ -113,7 +87,7 @@ function savePatientFromForm(){
   try {
     const p = {
       id: state.patient?.id || null,
-      user_id: currentUser?.id || null,
+      user_id: currentUser?.id || 'local-user',
       nome: document.getElementById('p_name')?.value.trim() || 'Paciente Exemplo',
       data_nascimento: document.getElementById('p_data_nasc')?.value || null,
       genero: document.getElementById('p_genero')?.value || '',
@@ -177,3 +151,4 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 // Exportar para debugging
 window.appState = state;
 window.supabaseClient = supabase;
+window.currentUser = currentUser;
