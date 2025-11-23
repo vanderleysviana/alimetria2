@@ -1,8 +1,8 @@
-// src/patientDiets.js - VERSÃO COMPLETA
+// src/patientDiets.js - ATUALIZAR IMPORT
 import { state, MEALS, convertAppMealsToDbFormat } from './state.js';
 import { renderMeals, renderSummary } from './ui.js';
 import { loadPatientDiets } from './state.js';
-import { supabase, ensureAuth } from './supabase.js';
+import supabase, { ensureAuth } from './supabase.js'; // ← Mudar para import default
 import { nanoid } from 'nanoid';
 
 export function openPatientDiets(patientId) {
