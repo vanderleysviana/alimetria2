@@ -1,6 +1,6 @@
 // src/consultations.js - SISTEMA COMPLETO DE CONSULTAS
 import { state, loadPatientConsultations } from './state.js';
-import { supabase, ensureAuth } from './supabase.js';
+import supabase, { ensureAuth } from './supabase.js';
 
 export function openPatientConsultations(patientId) {
   const patient = state.patients[patientId];
