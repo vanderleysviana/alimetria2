@@ -1,4 +1,4 @@
-// src/ui.js
+// src/ui.js - VERSÃO CORRIGIDA
 import { state, MEALS, formatNumber, calcScaled } from './state.js';
 import { openAddFoodModal, openRegisterFoodModal } from './modals.js';
 import { savePatientToPdfContext } from './pdf.js';
@@ -23,6 +23,13 @@ export function createMealCard(mealName){
 
 export function renderMeals(){
   const container = document.getElementById('mealsContainer');
+  
+  // Verificar se o container existe (aplicação principal carregada)
+  if (!container) {
+    console.log('⏳ Aplicação ainda não carregou, aguardando...');
+    return;
+  }
+
   container.innerHTML='';
 
   // Determine if we are allowed to edit: allow when either a diet is loaded (editingDiet) or a patient is selected and no diet is being edited.
@@ -64,6 +71,8 @@ export function renderMeals(){
 
 export function renderMealList(mealName){
   const list = document.getElementById(`list-${mealName}`);
+  if (!list) return; // Verificar se o elemento existe
+  
   list.innerHTML=''; 
   const foods = state.meals[mealName] || [];
   foods.forEach(item=>{
@@ -80,9 +89,11 @@ export function renderMealList(mealName){
     list.appendChild(row);
   });
   const totalsEl = document.getElementById(`totals-${mealName}`);
-  totalsEl.innerHTML=''; 
-  const sum = aggregateMeal(mealName);
-  totalsEl.innerHTML = `<div style="font-weight:600;color:#063970">Totais: Kcal ${formatNumber(sum.calorias,0)} • P ${formatNumber(sum.proteina)}g • C ${formatNumber(sum.carboidrato)}g • L ${formatNumber(sum.lipidio)}g • Fib ${formatNumber(sum.fibra)}g</div>`;
+  if (totalsEl) {
+    totalsEl.innerHTML=''; 
+    const sum = aggregateMeal(mealName);
+    totalsEl.innerHTML = `<div style="font-weight:600;color:#063970">Totais: Kcal ${formatNumber(sum.calorias,0)} • P ${formatNumber(sum.proteina)}g • C ${formatNumber(sum.carboidrato)}g • L ${formatNumber(sum.lipidio)}g • Fib ${formatNumber(sum.fibra)}g</div>`;
+  }
 }
 
 export function aggregateMeal(mealName){
@@ -117,6 +128,11 @@ export function aggregateAll(){
 
 export function renderSummary(){
   const details = document.getElementById('summaryDetails');
+  const alerts = document.getElementById('alerts');
+  
+  // Verificar se os elementos existem
+  if (!details || !alerts) return;
+  
   const sum = aggregateAll();
   details.innerHTML = `
     <div style="min-width:140px"><strong>Calorias</strong><div style="font-size:16px;color:var(--azul-escuro)">${formatNumber(sum.calorias,0)} kcal</div></div>
@@ -171,7 +187,7 @@ export function renderSummary(){
     }
   }
 
-  const alerts = document.getElementById('alerts'); alerts.innerHTML=''; 
+  alerts.innerHTML=''; 
   if(sum.proteina < 50) addAlert('Baixa ingestão de proteínas.');
   if(sum.carboidrato > 350) addAlert('Excesso de carboidratos.');
   if(sum.calorias > 3000) addAlert('Calorias acima do recomendado.');
@@ -179,16 +195,38 @@ export function renderSummary(){
   MEALS.forEach(m=>{
     if((state.meals[m] || []).length===0) addAlert(`Refeição vazia: ${m}`);
   });
+  
   function addAlert(text){
     const a = document.createElement('div'); a.className='alert'; a.textContent=text;
     alerts.appendChild(a);
   }
 }
 
-// wire some global buttons and initial render
-document.addEventListener('DOMContentLoaded', ()=>{
+// Sistema de eventos para notificar quando a aplicação estiver pronta
+let appReady = false;
+const readyCallbacks = [];
+
+export function onAppReady(callback) {
+  if (appReady) {
+    callback();
+  } else {
+    readyCallbacks.push(callback);
+  }
+}
+
+export function notifyAppReady() {
+  appReady = true;
+  readyCallbacks.forEach(callback => callback());
+  readyCallbacks.length = 0; // Limpar array
+}
+
+// wire some global buttons and initial render - AGORA CONTROLADO PELO APP PRINCIPAL
+export function initUI() {
+  console.log('🎨 Inicializando UI...');
+  
   const exportBtn = document.getElementById('exportPdfBtn');
   if(exportBtn) exportBtn.addEventListener('click', savePatientToPdfContext);
+  
   const clearBtn = document.getElementById('clearBtn');
   if(clearBtn) clearBtn.addEventListener('click', ()=>{
     if(!confirm('Limpar todas as refeições?')) return;
@@ -212,5 +250,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
   },500);
 
+  // Renderizar inicialmente
   renderMeals();
-});
+  
+  console.log('✅ UI inicializada com sucesso');
+}
