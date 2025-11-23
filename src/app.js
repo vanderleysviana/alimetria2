@@ -38,7 +38,8 @@ class App {
     app.innerHTML = '';
     app.style.background = 'linear-gradient(180deg, #FFFFFF, #f7fbff)';
     app.style.minHeight = '100vh';
-
+    notifyAppReady();
+import { notifyAppReady } from './ui.js';
     app.innerHTML = `
       <div class="container">
         <header>
