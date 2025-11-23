@@ -162,16 +162,18 @@
     }
   </style>
 
-  <script type="importmap">
-  {
-    "imports": {
-      "nanoid": "https://esm.sh/nanoid@4.0.2",
-      "jspdf": "https://esm.sh/jspdf@2.5.1",
-      "chart.js": "https://esm.sh/chart.js@4.4.0",
-      "chart.js/auto": "https://esm.sh/chart.js@4.4.0/auto"
-    }
+  <!-- No seu index.html, atualize o importmap -->
+<script type="importmap">
+{
+  "imports": {
+    "nanoid": "https://esm.sh/nanoid@4.0.2",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "chart.js": "https://esm.sh/chart.js@4.4.0",
+    "chart.js/auto": "https://esm.sh/chart.js@4.4.0/auto",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
   }
-  </script>
+}
+</script>
 </head>
 <body>
   <div id="app" class="container">
