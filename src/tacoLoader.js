@@ -1,7 +1,7 @@
 // src/tacoLoader.js
 import { state } from './state.js';
 import { renderMeals } from './ui.js';
-import { supabase } from './supabase.js';
+import supabase from './supabase.js'; 
 
 export async function loadTaco(){
   try{
