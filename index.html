@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Montador de Dietas - Sistema Nutricional</title>
+  <title>Sistema Nutricional - Montador de Dietas</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -145,6 +145,20 @@
         padding: 10px 16px;
         font-size: 14px;
       }
+      
+      .container {
+        padding: 12px;
+      }
+      
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .patient {
+        width: 100%;
+        justify-content: space-between;
+      }
     }
 
     /* Animações suaves */
@@ -160,82 +174,113 @@
     .meal-card {
       animation: fadeIn 0.4s ease;
     }
+
+    /* Estilos para a tela de login */
+    .auth-tab {
+      transition: all 0.3s ease;
+    }
+
+    .auth-tab.active {
+      font-weight: 600;
+    }
+
+    /* Loading states */
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .spinner {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Melhorias de acessibilidade */
+    @media (prefers-reduced-motion: reduce) {
+      .patient-row,
+      .modal,
+      .meal-card,
+      .auth-tab {
+        transition: none;
+        animation: none;
+      }
+    }
+
+    /* Focus styles para acessibilidade */
+    button:focus,
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --texto: #e5e7eb;
+      }
+      
+      .meal-card {
+        background: #1f2937;
+      }
+      
+      .food-item {
+        background: #374151;
+      }
+      
+      .alert {
+        background: #374151;
+        color: #e5e7eb;
+      }
+    }
   </style>
 
-  <!-- No seu index.html, atualize o importmap -->
-<script type="importmap">
-{
-  "imports": {
-    "nanoid": "https://esm.sh/nanoid@4.0.2",
-    "jspdf": "https://esm.sh/jspdf@2.5.1",
-    "chart.js": "https://esm.sh/chart.js@4.4.0",
-    "chart.js/auto": "https://esm.sh/chart.js@4.4.0/auto",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+  <script type="importmap">
+  {
+    "imports": {
+      "nanoid": "https://esm.sh/nanoid@4.0.2",
+      "jspdf": "https://esm.sh/jspdf@2.5.1",
+      "chart.js": "https://esm.sh/chart.js@4.4.0",
+      "chart.js/auto": "https://esm.sh/chart.js@4.4.0/auto",
+      "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+    }
   }
-}
-</script>
+  </script>
 </head>
 <body>
-  <div id="app" class="container">
-    <header>
-      <h1>🍽️ Montador de Dietas</h1>
-      <div class="patient">
-        <div style="min-width:200px;">
-          <label style="font-size:12px;color:#475569">Paciente Atual</label>
-          <div id="patientDisplay" style="padding:8px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#0f172a;min-height:40px;display:flex;align-items:center;">
-            — nenhum paciente selecionado —
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button id="managePatientsBtn" class="btn" style="background:#10b981;">👥 Gerenciar Pacientes</button>
-          <button id="exportPdfBtn" class="btn">📄 Exportar PDF</button>
+  <!-- Aplicação principal -->
+  <div id="app">
+    <!-- O conteúdo será injetado aqui pelo JavaScript -->
+    <!-- Durante o carregamento mostrar um loading -->
+    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+      <div style="text-align: center; color: white;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🍎</div>
+        <h1 style="margin-bottom: 0.5rem;">Sistema Nutricional</h1>
+        <p style="opacity: 0.8;">Carregando...</p>
+        <div style="margin-top: 2rem;">
+          <div class="spinner" style="border-top-color: white;"></div>
         </div>
       </div>
-    </header>
-
-    <main>
-      <!-- Status Message -->
-      <div id="statusMessage" style="display:none;"></div>
-
-      <!-- Main Content -->
-      <div class="layout" id="mealsContainer">
-        <!-- meals injected here -->
-        <div id="welcomeMessage" style="text-align:center;padding:40px 20px;color:#64748b;">
-          <div style="font-size:48px;margin-bottom:16px;">🍎</div>
-          <h2 style="color:#1e40af;margin-bottom:16px;">Bem-vindo ao Montador de Dietas</h2>
-          <p style="margin-bottom:24px;line-height:1.6;">Clique em "Gerenciar Pacientes" para começar a criar dietas personalizadas.</p>
-          <button id="quickStartBtn" class="btn" style="background:#1e40af;padding:12px 24px;">
-            🚀 Começar Agora
-          </button>
-        </div>
-      </div>
-
-      <div class="summary" id="summaryPanel" style="margin-top:18px;display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-          <div>
-            <strong style="font-size:16px;color:var(--azul-escuro)">📊 Resumo Nutricional do Dia</strong>
-            <div style="font-size:13px;color:#334155">Totais agregados de todas as refeições</div>
-          </div>
-          <div class="controls">
-            <button id="clearBtn" class="btn" style="background:#ef4444;">🗑️ Limpar Tudo</button>
-          </div>
-        </div>
-        <div id="summaryDetails" style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap"></div>
-        <div id="alerts" class="alerts"></div>
-      </div>
-    </main>
+    </div>
   </div>
-
-  <!-- Modal template -->
-  <div id="modalRoot"></div>
-
-  <!-- Floating Save Button -->
-  <button id="saveDietFloating">💾 Salvar Dieta</button>
 
   <!-- Script principal -->
   <script type="module">
     // Importação dos módulos principais
     import './src/supabase.js';
+    import './src/auth.js';
     import './src/state.js';
     import './src/tacoLoader.js';
     import './src/ui.js';
@@ -246,6 +291,29 @@
     import './src/consultations.js';
     import './src/patients.js';
     import './src/app.js';
+
+    // Remover loading screen quando a aplicação carregar
+    setTimeout(() => {
+      const loadingScreen = document.querySelector('#app > div');
+      if (loadingScreen && !document.querySelector('.container')) {
+        loadingScreen.style.display = 'none';
+      }
+    }, 2000);
+  </script>
+
+  <!-- Analytics/Error Tracking (opcional) -->
+  <script>
+    // Error tracking básico
+    window.addEventListener('error', function(e) {
+      console.error('Erro capturado:', e.error);
+    });
+
+    // Service Worker para PWA (futura implementação)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        // navigator.serviceWorker.register('/sw.js');
+      });
+    }
   </script>
 </body>
 </html>
