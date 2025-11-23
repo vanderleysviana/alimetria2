@@ -1,8 +1,8 @@
 // src/supabase.js
 import { createClient } from 'https://esm.sh/@supabase/supabase-js'
 
-const supabaseUrl = 'https://pghhuzujutcqbvbctdef.supabase.co' // substitua pela sua URL
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnaGh1enVqdXRjcWJ2YmN0ZGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzMzM0NzIsImV4cCI6MjA3ODkwOTQ3Mn0.nEvaIDWBt0Ba5_pdDmVpOsraAu909w0mdMN6jbbgWBY' // substitua pela sua chave
+const supabaseUrl = 'https://unkjvedlsesjufplblgd.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVua2p2ZWRsc2VzanVmcGxibGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2OTI0MTcsImV4cCI6MjA3OTI2ODQxN30.KIotfwLq5OcNQerpr2fcBUh2AO_invnj9YoeJPyoGss';
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function ensureAuth() {
