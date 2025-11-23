@@ -1,8 +1,9 @@
-// src/patientManager.js - VERSÃO CORRIGIDA
+// src/patientManager.js - VERSÃO COMPLETA ATUALIZADA
 import { state, MEALS, loadPatientsFromDB, loadPatientDiets, loadPatientConsultations, calcularIdade } from './state.js';
 import { renderMeals, renderSummary } from './ui.js';
 import { openPatientDiets, openPatientConsultations } from './patients.js';
-import supabase, { ensureAuth, getCurrentUser } from './supabase.js'; // ← IMPORTAR CORRETAMENTE
+import supabase from './supabase.js';
+import { authManager } from './auth.js';
 
 export function initPatientUI() {
   const disp = document.getElementById('patientDisplay');
@@ -365,15 +366,11 @@ export async function openEditPatientForm(existing = null) {
       return;
     }
     
-    // CORREÇÃO: Usar supabase importado corretamente
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    // Se houver erro de autenticação, usar usuário local
-    let userId = 'local-user';
-    if (!userError && user) {
-      userId = user.id;
-    } else {
-      console.warn('⚠️ Usando modo local - sem autenticação');
+    // USAR authManager para obter usuário atual
+    const currentUser = authManager.getCurrentUser();
+    if (!currentUser) {
+      alert('Erro de autenticação. Faça login novamente.');
+      return;
     }
     
     const patientData = {
@@ -385,7 +382,7 @@ export async function openEditPatientForm(existing = null) {
       email: emailField.input.value.trim() || null,
       tags: tagsField.input.value.split(',').map(tag => tag.trim()).filter(tag => tag),
       observacoes: obsField.input.value.trim() || null,
-      user_id: userId // Usar o ID obtido
+      user_id: currentUser.id // ← Usar ID do usuário autenticado
     };
 
     try {
@@ -424,30 +421,7 @@ export async function openEditPatientForm(existing = null) {
       
     } catch (error) {
       console.error('Erro ao salvar paciente:', error);
-      
-      // Fallback: salvar localmente se houver erro de rede/auth
-      if (error.message.includes('Network') || error.message.includes('auth') || error.message.includes('row-level security')) {
-        console.log('🔄 Tentando salvar localmente...');
-        const localId = existing?.id || `local-${Date.now()}`;
-        const localPatient = {
-          id: localId,
-          ...patientData,
-          // Marcar como local
-          _local: true
-        };
-        
-        state.patients[localId] = { 
-          ...localPatient, 
-          dietas: existing?.dietas || [],
-          consultas: existing?.consultas || [] 
-        };
-        
-        initPatientUI();
-        backdrop.remove();
-        alert('Paciente salvo localmente (modo offline).');
-      } else {
-        alert('Erro ao salvar paciente: ' + error.message);
-      }
+      alert('Erro ao salvar paciente: ' + error.message);
     }
   };
   
@@ -483,4 +457,29 @@ function showStatusMessage(message, type = 'info') {
   setTimeout(() => {
     statusEl.style.display = 'none';
   }, 3000);
+}
+
+// Função para excluir paciente
+async function deletePatient(patientId) {
+  try {
+    const { error } = await supabase
+      .from('patients')
+      .delete()
+      .eq('id', patientId);
+    
+    if (error) throw error;
+    
+    delete state.patients[patientId];
+    console.log(`✅ Paciente ${patientId} excluído`);
+    
+  } catch (error) {
+    console.error('❌ Erro ao excluir paciente:', error);
+    alert('Erro ao excluir paciente: ' + error.message);
+  }
+}
+
+// Adicionar botão de excluir na renderização da lista
+export function addDeleteButtonToPatientList() {
+  // Esta função pode ser usada para adicionar botão de excluir
+  // em cada item da lista de pacientes se necessário
 }
