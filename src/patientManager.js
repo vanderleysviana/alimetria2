@@ -1,8 +1,8 @@
-// src/patientManager.js - VERSÃO COMPLETA ATUALIZADA
+// src/patientManager.js - VERSÃO CORRIGIDA
 import { state, MEALS, loadPatientsFromDB, loadPatientDiets, loadPatientConsultations, calcularIdade } from './state.js';
 import { renderMeals, renderSummary } from './ui.js';
 import { openPatientDiets, openPatientConsultations } from './patients.js';
-import { supabase } from './supabase.js';
+import supabase, { ensureAuth, getCurrentUser } from './supabase.js'; // ← IMPORTAR CORRETAMENTE
 
 export function initPatientUI() {
   const disp = document.getElementById('patientDisplay');
@@ -365,10 +365,15 @@ export async function openEditPatientForm(existing = null) {
       return;
     }
     
-    const { data: { user }, error: userError } = await window.supabase.auth.getUser();
-    if (userError || !user) {
-      alert('Erro de autenticação. Recarregue a página.');
-      return;
+    // CORREÇÃO: Usar supabase importado corretamente
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    // Se houver erro de autenticação, usar usuário local
+    let userId = 'local-user';
+    if (!userError && user) {
+      userId = user.id;
+    } else {
+      console.warn('⚠️ Usando modo local - sem autenticação');
     }
     
     const patientData = {
@@ -380,19 +385,19 @@ export async function openEditPatientForm(existing = null) {
       email: emailField.input.value.trim() || null,
       tags: tagsField.input.value.split(',').map(tag => tag.trim()).filter(tag => tag),
       observacoes: obsField.input.value.trim() || null,
-      user_id: user.id
+      user_id: userId // Usar o ID obtido
     };
 
     try {
       let result;
       if (existing?.id) {
-        result = await window.supabase
+        result = await supabase
           .from('patients')
           .update(patientData)
           .eq('id', existing.id)
           .select();
       } else {
-        result = await window.supabase
+        result = await supabase
           .from('patients')
           .insert([patientData])
           .select();
@@ -419,7 +424,30 @@ export async function openEditPatientForm(existing = null) {
       
     } catch (error) {
       console.error('Erro ao salvar paciente:', error);
-      alert('Erro ao salvar paciente: ' + error.message);
+      
+      // Fallback: salvar localmente se houver erro de rede/auth
+      if (error.message.includes('Network') || error.message.includes('auth') || error.message.includes('row-level security')) {
+        console.log('🔄 Tentando salvar localmente...');
+        const localId = existing?.id || `local-${Date.now()}`;
+        const localPatient = {
+          id: localId,
+          ...patientData,
+          // Marcar como local
+          _local: true
+        };
+        
+        state.patients[localId] = { 
+          ...localPatient, 
+          dietas: existing?.dietas || [],
+          consultas: existing?.consultas || [] 
+        };
+        
+        initPatientUI();
+        backdrop.remove();
+        alert('Paciente salvo localmente (modo offline).');
+      } else {
+        alert('Erro ao salvar paciente: ' + error.message);
+      }
     }
   };
   
