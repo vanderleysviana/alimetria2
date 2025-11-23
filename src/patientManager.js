@@ -2,6 +2,7 @@
 import { state, MEALS, loadPatientsFromDB, loadPatientDiets, loadPatientConsultations, calcularIdade } from './state.js';
 import { renderMeals, renderSummary } from './ui.js';
 import { openPatientDiets, openPatientConsultations } from './patients.js';
+import { supabase } from './supabase.js';
 
 export function initPatientUI() {
   const disp = document.getElementById('patientDisplay');
