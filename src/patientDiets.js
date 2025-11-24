@@ -1,4 +1,4 @@
-// src/patientDiets.js - VERIFICAÇÃO DE IMPORTAÇÕES
+// src/patientDiets.js - VERSÃO COMPLETA E CORRIGIDA
 import { state, MEALS, convertAppMealsToDbFormat, loadPatientDiets } from './state.js';
 import { renderMeals, renderSummary } from './ui.js';
 import supabase, { ensureAuth } from './supabase.js';
@@ -403,6 +403,85 @@ export async function saveCurrentSessionAsDiet(patientId) {
     await loadPatientDiets(patientId);
     
     alert(`Dieta "${name}" salva no paciente ${patient.nome}.`);
+    
+  } catch (error) {
+    console.error('❌ Erro ao salvar dieta:', error);
+    alert('Erro ao salvar dieta no banco de dados');
+  }
+}
+
+// ADICIONAR ESTA NOVA FUNÇÃO - saveCurrentDiet
+export async function saveCurrentDiet() {
+  if (!state.currentPatient) {
+    alert('Selecione um paciente para começar.');
+    return;
+  }
+  
+  // Se já temos uma dieta em edição, use saveEditingDiet
+  if (state.currentDiet) {
+    return await saveEditingDiet();
+  }
+  
+  // Caso contrário, crie uma nova dieta
+  const hasAny = Object.keys(state.meals).some(m => (state.meals[m] || []).length > 0);
+  if (!hasAny) {
+    alert('A dieta está vazia. Adicione pelo menos 1 alimento.');
+    return;
+  }
+
+  const name = prompt('Nome para a nova dieta (obrigatório):');
+  if (!name || !name.trim()) {
+    alert('Nome da dieta obrigatório');
+    return;
+  }
+  
+  try {
+    await ensureAuth();
+    
+    const { data: diet, error } = await supabase
+      .from('diets')
+      .insert([{
+        patient_id: state.currentPatient.id,
+        data: new Date().toISOString().split('T')[0],
+        objetivo: name.trim()
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    const dbMeals = convertAppMealsToDbFormat(state.meals);
+    
+    for (const dbMeal of dbMeals) {
+      const { data: meal, error: mealError } = await supabase
+        .from('meals')
+        .insert([{ diet_id: diet.id, nome: dbMeal.nome }])
+        .select()
+        .single();
+      
+      if (mealError) throw mealError;
+      
+      if (dbMeal.meal_items.length > 0) {
+        const mealItems = dbMeal.meal_items.map(item => ({
+          meal_id: meal.id,
+          food_id: item.food_id,
+          quantidade_gramas: item.quantidade_gramas
+        }));
+        
+        const { error: itemsError } = await supabase
+          .from('meal_items')
+          .insert(mealItems);
+        
+        if (itemsError) throw itemsError;
+      }
+    }
+    
+    await loadPatientDiets(state.currentPatient.id);
+    state.currentDiet = { patientId: state.currentPatient.id, dietId: diet.id, name: name.trim() };
+    state.unsavedChanges = false;
+    
+    alert(`Dieta "${name}" salva com sucesso!`);
+    renderSummary();
     
   } catch (error) {
     console.error('❌ Erro ao salvar dieta:', error);
