@@ -1,5 +1,5 @@
-// src/patientManager.js - VERSÃO COMPLETA ATUALIZADA
-import { state, MEALS, loadPatientsFromDB, loadPatientDiets, loadPatientConsultations, calcularIdade } from './state.js';
+// src/patientManager.js - VERSÃO COMPLETA E CORRIGIDA
+import { state, loadPatientsFromDB, loadPatientDiets, loadPatientConsultations, calcularIdade } from './state.js';
 import { renderMeals, renderSummary } from './ui.js';
 import { openPatientDiets, openPatientConsultations } from './patients.js';
 import supabase from './supabase.js';
@@ -8,7 +8,7 @@ import { authManager } from './auth.js';
 export function initPatientUI() {
   const disp = document.getElementById('patientDisplay');
   if (!disp) return;
-  const current = state.currentPatient;
+  const current = state.currentPatient && state.currentPatient.nome ? state.currentPatient : null;
   disp.textContent = current ? `${current.nome}` : '— nenhum paciente selecionado —';
 }
 
@@ -18,10 +18,12 @@ export async function openPatientManager() {
   try {
     await loadPatientsFromDB();
     
-    const root = document.getElementById('modalRoot');
+    // Verificar e criar modalRoot se não existir
+    let root = document.getElementById('modalRoot');
     if (!root) {
-      console.error('❌ modalRoot não encontrado');
-      return;
+      root = document.createElement('div');
+      root.id = 'modalRoot';
+      document.body.appendChild(root);
     }
     
     root.innerHTML = '';
@@ -78,7 +80,6 @@ export async function openPatientManager() {
     list.style.border = '1px solid #e5e7eb';
     list.style.borderRadius = '8px';
     list.style.padding = '8px';
-    list.className = 'patient-list';
     modal.appendChild(list);
 
     // Renderizar lista inicial
@@ -90,7 +91,11 @@ export async function openPatientManager() {
     });
 
     const footer = document.createElement('div');
-    footer.className = 'modal-footer';
+    footer.style.display = 'flex';
+    footer.style.justifyContent = 'flex-end';
+    footer.style.marginTop = '16px';
+    footer.style.paddingTop = '16px';
+    footer.style.borderTop = '1px solid #e5e7eb';
     
     const close = document.createElement('button');
     close.className = 'btn';
@@ -149,7 +154,6 @@ export function renderPatientList(filter, container) {
     row.style.padding = '16px 12px';
     row.style.borderBottom = '1px solid #f3f4f6';
     row.style.borderRadius = '8px';
-    row.style.marginBottom = '8px';
     row.style.background = '#fafafa';
     row.style.transition = 'all 0.2s ease';
     
@@ -242,7 +246,14 @@ export function renderPatientList(filter, container) {
 }
 
 export async function openEditPatientForm(existing = null) {
-  const root = document.getElementById('modalRoot');
+  // Verificar e criar modalRoot se não existir
+  let root = document.getElementById('modalRoot');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'modalRoot';
+    document.body.appendChild(root);
+  }
+  
   root.innerHTML = '';
   
   const backdrop = document.createElement('div');
@@ -336,7 +347,12 @@ export async function openEditPatientForm(existing = null) {
   ].forEach(field => modal.appendChild(field));
 
   const actions = document.createElement('div');
-  actions.className = 'modal-footer';
+  actions.style.display = 'flex';
+  actions.style.justifyContent = 'flex-end';
+  actions.style.gap = '12px';
+  actions.style.marginTop = '24px';
+  actions.style.paddingTop = '16px';
+  actions.style.borderTop = '1px solid #e5e7eb';
   
   const cancel = document.createElement('button');
   cancel.className = 'btn';
@@ -394,7 +410,9 @@ export async function openEditPatientForm(existing = null) {
       state.patients[savedPatient.id] = { 
         ...savedPatient, 
         dietas: existing?.dietas || [],
-        consultas: existing?.consultas || [] 
+        consultas: existing?.consultas || [],
+        dietCount: existing?.dietCount || 0,
+        consultationCount: existing?.consultationCount || 0
       };
       
       initPatientUI();
@@ -402,7 +420,7 @@ export async function openEditPatientForm(existing = null) {
       
       // Recarregar a lista se o gerenciador estiver aberto
       const searchInput = document.getElementById('patientSearch');
-      const listContainer = document.querySelector('.modal .patient-list');
+      const listContainer = backdrop.querySelector('.patient-list') || backdrop.querySelector('div[style*="max-height"]');
       if (searchInput && listContainer) {
         renderPatientList(searchInput.value.trim().toLowerCase(), listContainer);
       }
@@ -435,8 +453,22 @@ export function selectPatient(id) {
 }
 
 function showStatusMessage(message, type = 'info') {
-  const statusEl = document.getElementById('statusMessage');
-  if (!statusEl) return;
+  // Tentar encontrar elemento de status na interface atual
+  let statusEl = document.getElementById('statusMessage');
+  
+  // Se não existir, criar um temporariamente
+  if (!statusEl) {
+    statusEl = document.createElement('div');
+    statusEl.id = 'statusMessage';
+    statusEl.style.position = 'fixed';
+    statusEl.style.top = '20px';
+    statusEl.style.right = '20px';
+    statusEl.style.zIndex = '1000';
+    statusEl.style.padding = '16px';
+    statusEl.style.borderRadius = '8px';
+    statusEl.style.fontWeight = '500';
+    document.body.appendChild(statusEl);
+  }
   
   statusEl.textContent = message;
   statusEl.className = `status-message status-${type}`;
@@ -448,7 +480,11 @@ function showStatusMessage(message, type = 'info') {
 }
 
 // Função para excluir paciente
-async function deletePatient(patientId) {
+export async function deletePatient(patientId) {
+  if (!confirm('Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.')) {
+    return;
+  }
+  
   try {
     const { error } = await supabase
       .from('patients')
@@ -458,10 +494,24 @@ async function deletePatient(patientId) {
     if (error) throw error;
     
     delete state.patients[patientId];
+    
+    // Se o paciente excluído era o atual, limpar seleção
+    if (state.currentPatient && state.currentPatient.id === patientId) {
+      state.currentPatient = null;
+      initPatientUI();
+      renderMeals();
+      renderSummary();
+    }
+    
     console.log(`✅ Paciente ${patientId} excluído`);
+    showStatusMessage('Paciente excluído com sucesso!', 'success');
     
   } catch (error) {
     console.error('❌ Erro ao excluir paciente:', error);
     alert('Erro ao excluir paciente: ' + error.message);
   }
 }
+
+// Adicionar funções globais para uso em eventos
+window.openEditPatientForm = openEditPatientForm;
+window.selectPatient = selectPatient;
