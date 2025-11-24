@@ -1,7 +1,9 @@
-// src/patientManager.js - VERSÃO COMPLETA E CORRIGIDA
+// src/patientManager.js - CORRIGIDO PARA USAR PERFIL
 import { state, loadPatientsFromDB, loadPatientDiets, loadPatientConsultations, calcularIdade } from './state.js';
 import { renderMeals, renderSummary } from './ui.js';
-import { openPatientDiets } from './patientDiets.js'; // Importação direta
+import { openPatientDiets } from './patientDiets.js';
+import { openPatientConsultations } from './consultations.js';
+import { openPatientProfile } from './patientProfile.js';
 import supabase from './supabase.js';
 import { authManager } from './auth.js';
 
@@ -197,10 +199,20 @@ export function renderPatientList(filter, container) {
     actions.style.gap = '8px';
     actions.style.minWidth = '200px';
     
+    const profileBtn = document.createElement('button');
+    profileBtn.className = 'btn btn-primary';
+    profileBtn.style.width = '100%';
+    profileBtn.textContent = '👤 Perfil';
+    profileBtn.onclick = () => {
+      openPatientProfile(p.id);
+      document.querySelector('.modal-backdrop')?.remove();
+    };
+    
     const dietBtn = document.createElement('button');
-    dietBtn.className = 'btn btn-primary';
+    dietBtn.className = 'btn';
+    dietBtn.style.background = '#10B981';
     dietBtn.style.width = '100%';
-    dietBtn.textContent = '📄 Dietas';
+    dietBtn.textContent = '🍽️ Dietas';
     dietBtn.onclick = async () => {
       await loadPatientDiets(p.id);
       openPatientDiets(p.id);
@@ -225,19 +237,10 @@ export function renderPatientList(filter, container) {
       openEditPatientForm(p);
     };
     
-    const selectBtn = document.createElement('button');
-    selectBtn.className = 'btn btn-success';
-    selectBtn.style.width = '100%';
-    selectBtn.textContent = '✅ Selecionar';
-    selectBtn.onclick = () => {
-      openPatientProfile(p.id); // Mudança aqui - agora abre o perfil
-      document.querySelector('.modal-backdrop')?.remove();
-};
-    
+    actions.appendChild(profileBtn);
     actions.appendChild(dietBtn);
     actions.appendChild(consultBtn);
     actions.appendChild(editBtn);
-    actions.appendChild(selectBtn);
 
     row.appendChild(left);
     row.appendChild(actions);
@@ -337,13 +340,14 @@ export async function openEditPatientForm(existing = null) {
   const cpfField = makeField('CPF', 'pt_cpf', 'text', existing?.cpf || '');
   const telefoneField = makeField('Telefone', 'pt_telefone', 'tel', existing?.telefone || '');
   const emailField = makeField('Email', 'pt_email', 'email', existing?.email || '');
+  const fotoField = makeField('URL da Foto (opcional)', 'pt_foto', 'text', existing?.foto_url || '');
   const tagsField = makeField('Tags (separadas por vírgula)', 'pt_tags', 'text', existing?.tags?.join(', ') || '');
   const obsField = makeField('Observações', 'pt_obs', 'textarea', existing?.observacoes || '');
 
   [
     nomeField.field, dataNascField.field, generoField.field, 
     cpfField.field, telefoneField.field, emailField.field,
-    tagsField.field, obsField.field
+    fotoField.field, tagsField.field, obsField.field
   ].forEach(field => modal.appendChild(field));
 
   const actions = document.createElement('div');
@@ -384,6 +388,7 @@ export async function openEditPatientForm(existing = null) {
       cpf: cpfField.input.value.trim() || null,
       telefone: telefoneField.input.value.trim() || null,
       email: emailField.input.value.trim() || null,
+      foto_url: fotoField.input.value.trim() || null,
       tags: tagsField.input.value.split(',').map(tag => tag.trim()).filter(tag => tag),
       observacoes: obsField.input.value.trim() || null,
       user_id: currentUser.id // ← Usar ID do usuário autenticado
