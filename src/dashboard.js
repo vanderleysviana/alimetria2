@@ -1,10 +1,15 @@
-// src/dashboard.js - DASHBOARD ELEGANTE E FUNCIONAL
+// src/dashboard.js - DASHBOARD CORRIGIDO
 import { state, loadRecentConsultations, loadStats, selectPatient } from './state.js';
-import { openPatientManager, openPatientConsultations } from './patients.js';
+import { openPatientManager, openPatientConsultations } from './patientManager.js';
 import { showDietBuilder } from './dietBuilder.js';
 
 export function showDashboard() {
   const app = document.getElementById('app');
+  
+  if (!app) {
+    console.error('❌ Elemento app não encontrado');
+    return;
+  }
   
   app.innerHTML = `
     <div class="dashboard-container">
@@ -157,14 +162,21 @@ async function loadDashboardData() {
 }
 
 function updateStats(stats) {
-  document.getElementById('patientCount').textContent = stats.patientCount;
-  document.getElementById('todayConsultations').textContent = stats.todayConsultations;
-  document.getElementById('dietCount').textContent = stats.dietCount;
-  document.getElementById('weekConsultations').textContent = state.recentConsultations?.length || 0;
+  // Verificar se elementos existem antes de atualizar
+  const patientCountEl = document.getElementById('patientCount');
+  const todayConsultationsEl = document.getElementById('todayConsultations');
+  const dietCountEl = document.getElementById('dietCount');
+  const weekConsultationsEl = document.getElementById('weekConsultations');
+
+  if (patientCountEl) patientCountEl.textContent = stats.patientCount || 0;
+  if (todayConsultationsEl) todayConsultationsEl.textContent = stats.todayConsultations || 0;
+  if (dietCountEl) dietCountEl.textContent = stats.dietCount || 0;
+  if (weekConsultationsEl) weekConsultationsEl.textContent = state.recentConsultations?.length || 0;
 }
 
 function renderConsultations(consultations) {
   const container = document.getElementById('consultationsList');
+  if (!container) return;
   
   if (!consultations || consultations.length === 0) {
     container.innerHTML = `
@@ -203,6 +215,8 @@ function renderConsultations(consultations) {
 
 function renderRecentPatients() {
   const container = document.getElementById('recentPatients');
+  if (!container) return;
+  
   const patients = Object.values(state.patients).slice(0, 5);
   
   if (patients.length === 0) {
