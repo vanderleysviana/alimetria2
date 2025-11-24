@@ -2,8 +2,8 @@
 import { state, MEALS, convertAppMealsToDbFormat } from './state.js';
 import { renderMeals, renderSummary } from './ui.js';
 import { loadPatientDiets } from './state.js';
-import supabase, { ensureAuth } from './supabase.js'; // ← Mudar para import default
-import { nanoid } from 'nanoid';
+import supabase, { ensureAuth } from './supabase.js';
+import { generateId } from './idGenerator.js'; // ← Importando nossa função
 
 export function openPatientDiets(patientId) {
   const patient = state.patients[patientId];
