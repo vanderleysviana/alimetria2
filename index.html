@@ -1519,6 +1519,121 @@
         flex-direction: column;
       }
     }
+
+          /* Anthropometry Card Styles */
+      .anthropometry-card {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        background: white;
+        transition: transform 0.2s ease;
+      }
+      
+      .anthropometry-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+      
+      .anthro-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+      
+      .anthro-date {
+        font-weight: 600;
+        color: var(--primary);
+      }
+      
+      .anthro-measures {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 8px;
+      }
+      
+      .measure {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      
+      .measure:last-child {
+        border-bottom: none;
+      }
+      
+      .measure label {
+        font-weight: 500;
+        color: var(--dark);
+        font-size: 14px;
+      }
+      
+      .measure span {
+        font-weight: 600;
+        color: var(--primary);
+      }
+      
+      /* Anamnesis Group Styles */
+      .anamnesis-group {
+        background: white;
+        padding: 16px;
+        border-radius: 8px;
+        border-left: 4px solid var(--info);
+        margin-bottom: 16px;
+        box-shadow: var(--shadow);
+      }
+      
+      .anamnesis-group h4 {
+        margin: 0 0 8px 0;
+        color: var(--info);
+        font-size: 16px;
+      }
+      
+      .anamnesis-group p {
+        margin: 0;
+        color: var(--dark);
+        line-height: 1.6;
+        white-space: pre-line;
+      }
+      
+      /* History List Styles */
+      .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      
+      .history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: var(--light);
+        border-radius: 6px;
+        border-left: 3px solid var(--primary);
+      }
+      
+      .history-date {
+        font-weight: 500;
+        color: var(--dark);
+      }
+      
+      /* IMC Calculator Styles */
+      .imc-classification {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #64748b;
+      }
+      
+      .imc-low { color: #ef4444; }
+      .imc-normal { color: #10b981; }
+      .imc-overweight { color: #f59e0b; }
+      .imc-obese { color: #dc2626; }
   </style>
 </head>
 <body>
@@ -1557,6 +1672,8 @@
     import './src/dietBuilder.js';
     import './src/app.js';
     import './src/patientProfile.js';
+    import './src/anthropometry.js';
+    import './src/anamnesis.js';
 
     // Remover loading screen quando a aplicação carregar
     // O app.js já cuida disso
