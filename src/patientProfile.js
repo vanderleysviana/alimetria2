@@ -387,6 +387,8 @@ function renderAnthropometryTab(container, patientId) {
   (patient.consultas || []).forEach(consult => {
     if (consult.anthropometry) {
       anthropometryData.push({
+        id: consult.anthropometry.id,
+        consultation_id: consult.id,
         date: consult.data_horario,
         ...consult.anthropometry
       });
@@ -413,16 +415,23 @@ function renderAnthropometryTab(container, patientId) {
     <div class="anthropometry-section">
       <div class="section-header">
         <h3>📏 Evolução Antropométrica</h3>
-        <button class="btn btn-primary" onclick="window.openConsultationForm('${patientId}')">
-          📊 Nova Medição
-        </button>
+        <div>
+          <button class="btn btn-primary" onclick="window.openConsultationForm('${patientId}')">
+            📊 Nova Medição
+          </button>
+        </div>
       </div>
       
       <div class="anthropometry-grid">
         ${anthropometryData.sort((a, b) => new Date(b.date) - new Date(a.date)).map(data => `
           <div class="anthropometry-card">
-            <div class="anthro-date">
-              ${new Date(data.date).toLocaleDateString('pt-BR')}
+            <div class="anthro-header">
+              <div class="anthro-date">
+                ${new Date(data.date).toLocaleDateString('pt-BR')}
+              </div>
+              <button class="btn btn-sm" onclick="openAnthropometryForm('${data.consultation_id}', '${patientId}', ${JSON.stringify(data).replace(/"/g, '&quot;')})" style="background: #10b981;">
+                ✏️ Editar
+              </button>
             </div>
             <div class="anthro-measures">
               ${data.peso ? `<div class="measure"><label>Peso:</label> <span>${data.peso} kg</span></div>` : ''}
@@ -432,6 +441,7 @@ function renderAnthropometryTab(container, patientId) {
               ${data.circ_quadril ? `<div class="measure"><label>Quadril:</label> <span>${data.circ_quadril} cm</span></div>` : ''}
               ${data.gordura_corporal ? `<div class="measure"><label>% Gordura:</label> <span>${data.gordura_corporal}%</span></div>` : ''}
               ${data.massa_magra ? `<div class="measure"><label>Massa Magra:</label> <span>${data.massa_magra} kg</span></div>` : ''}
+              ${data.agua_corporal ? `<div class="measure"><label>% Água:</label> <span>${data.agua_corporal}%</span></div>` : ''}
             </div>
           </div>
         `).join('')}
@@ -449,6 +459,8 @@ function renderAnamnesisTab(container, patientId) {
   (patient.consultas || []).forEach(consult => {
     if (consult.anamneses) {
       anamnesisData.push({
+        id: consult.anamneses.id,
+        consultation_id: consult.id,
         date: consult.data_horario,
         ...consult.anamneses
       });
@@ -477,9 +489,14 @@ function renderAnamnesisTab(container, patientId) {
     <div class="anamnesis-section">
       <div class="section-header">
         <h3>📝 Anamnese - ${new Date(latestAnamnesis.date).toLocaleDateString('pt-BR')}</h3>
-        <button class="btn btn-primary" onclick="window.openConsultationForm('${patientId}')">
-          📝 Nova Anamnese
-        </button>
+        <div>
+          <button class="btn" style="background: #f59e0b;" onclick="openAnamnesisForm('${latestAnamnesis.consultation_id}', '${patientId}', ${JSON.stringify(latestAnamnesis).replace(/"/g, '&quot;')})">
+            ✏️ Editar
+          </button>
+          <button class="btn btn-primary" onclick="window.openConsultationForm('${patientId}')">
+            📝 Nova Anamnese
+          </button>
+        </div>
       </div>
       
       <div class="anamnesis-content">
@@ -551,7 +568,6 @@ function renderAnamnesisTab(container, patientId) {
     </div>
   `;
 }
-
 function renderHistoryTab(container, patientId) {
   const patient = state.patients[patientId];
   if (!patient) return;
