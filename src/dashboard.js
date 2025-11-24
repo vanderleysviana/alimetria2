@@ -1,6 +1,7 @@
 // src/dashboard.js - DASHBOARD ELEGANTE E FUNCIONAL
-import { state, loadRecentConsultations, loadStats } from './state.js';
+import { state, loadRecentConsultations, loadStats, selectPatient } from './state.js';
 import { openPatientManager, openPatientConsultations } from './patients.js';
+import { showDietBuilder } from './dietBuilder.js';
 
 export function showDashboard() {
   const app = document.getElementById('app');
