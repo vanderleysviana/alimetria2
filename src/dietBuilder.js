@@ -1,8 +1,8 @@
-// src/dietBuilder.js - VERIFICAÇÃO DE IMPORTAÇÕES
+// src/dietBuilder.js - VERSÃO COMPLETA E CORRIGIDA
 import { state, MEALS, selectPatient, clearCurrentPatient } from './state.js';
 import { openAddFoodModal } from './modals.js';
 import { savePatientToPdfContext } from './pdf.js';
-import { saveCurrentDiet } from './patientDiets.js'; // ← Esta importação deve funcionar agora
+import { saveCurrentDiet } from './patientDiets.js';
 
 export function showDietBuilder() {
   const app = document.getElementById('app');
@@ -94,7 +94,7 @@ export function showDietBuilder() {
 }
 
 function attachDietBuilderEvents() {
-  // Botão salvar dieta - CORRIGIDO para usar saveCurrentDiet
+  // Botão salvar dieta
   document.getElementById('saveDietBtn').addEventListener('click', saveCurrentDiet);
   
   // Botão exportar PDF
@@ -109,8 +109,6 @@ function attachDietBuilderEvents() {
     }
   });
 }
-
-// ... (o resto das funções do dietBuilder permanecem iguais)
 
 function renderDietData() {
   renderMealLists();
