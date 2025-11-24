@@ -1,5 +1,5 @@
-// src/ui.js - VERSÃO COMPLETA COM EXPORTAÇÕES CORRIGIDAS
-import { state, MEALS, formatNumber, calcScaled } from './state.js';
+// src/ui.js - VERSÃO COMPLETA COM VERIFICAÇÃO DE PRONTIDÃO
+import { state, MEALS, formatNumber, calcScaled, isAppReady } from './state.js';
 import { openAddFoodModal } from './modals.js';
 import { savePatientToPdfContext } from './pdf.js';
 import { saveCurrentSessionAsDiet, saveEditingDiet } from './patientDiets.js';
@@ -51,11 +51,18 @@ export function createMealCard(mealName){
 }
 
 export function renderMeals(){
+  // Verificar se a aplicação está pronta
+  if (!isAppReady()) {
+    console.log('⏳ Aplicação ainda não carregou, aguardando...');
+    setTimeout(renderMeals, 100); // Tentar novamente em 100ms
+    return;
+  }
+
   const container = document.getElementById('mealsContainer');
   
   // Verificar se o container existe (aplicação principal carregada)
   if (!container) {
-    console.log('⏳ Aplicação ainda não carregou, aguardando...');
+    console.log('⏳ Container de refeições não encontrado, aguardando...');
     return;
   }
 
@@ -189,11 +196,21 @@ export function aggregateAll(){
 }
 
 export function renderSummary(){
+  // Verificar se aplicação está pronta
+  if (!isAppReady()) {
+    console.log('⏳ Aplicação ainda não carregou, aguardando renderização do resumo...');
+    setTimeout(renderSummary, 100);
+    return;
+  }
+
   const details = document.getElementById('summaryDetails');
   const alerts = document.getElementById('alerts');
   
   // Verificar se os elementos existem
-  if (!details || !alerts) return;
+  if (!details || !alerts) {
+    console.log('⏳ Elementos de resumo não encontrados...');
+    return;
+  }
   
   const sum = aggregateAll();
   details.innerHTML = `
@@ -294,8 +311,18 @@ export function initUI() {
     }
   },500);
 
-  // Renderizar inicialmente
-  renderMeals();
+  // Renderizar inicialmente apenas se app estiver pronto
+  if (isAppReady()) {
+    renderMeals();
+  } else {
+    console.log('⏳ UI: Aguardando aplicação ficar pronta...');
+    const checkInterval = setInterval(() => {
+      if (isAppReady()) {
+        clearInterval(checkInterval);
+        renderMeals();
+      }
+    }, 100);
+  }
   
   console.log('✅ UI inicializada com sucesso');
 }
