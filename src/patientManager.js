@@ -230,9 +230,9 @@ export function renderPatientList(filter, container) {
     selectBtn.style.width = '100%';
     selectBtn.textContent = '✅ Selecionar';
     selectBtn.onclick = () => {
-      selectPatient(p.id);
+      openPatientProfile(p.id); // Mudança aqui - agora abre o perfil
       document.querySelector('.modal-backdrop')?.remove();
-    };
+};
     
     actions.appendChild(dietBtn);
     actions.appendChild(consultBtn);
