@@ -901,6 +901,624 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #a8a8a8;
     }
+
+        /* Patient Profile Styles */
+    .patient-profile {
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .profile-header {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    
+    .patient-photo-section {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      flex: 1;
+    }
+    
+    .patient-photo {
+      text-align: center;
+      position: relative;
+    }
+    
+    .patient-photo img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid var(--primary-light);
+    }
+    
+    .photo-placeholder {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: white;
+      font-weight: bold;
+      border: 4px solid var(--primary-light);
+    }
+    
+    .btn-upload-photo {
+      margin-top: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      background: var(--gray-light);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    
+    .patient-basic-info h1 {
+      margin: 0 0 8px 0;
+      color: var(--dark);
+      font-size: 28px;
+    }
+    
+    .patient-meta {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .patient-meta span {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .contact-info {
+      margin-bottom: 12px;
+    }
+    
+    .contact-info div {
+      margin: 4px 0;
+      color: var(--gray);
+    }
+    
+    .patient-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .tag {
+      background: var(--info);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .profile-actions {
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+    }
+    
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card.large .stat-value {
+      font-size: 32px;
+    }
+    
+    .profile-tabs {
+      background: white;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    
+    .profile-tabs .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    
+    .profile-tabs .tab {
+      padding: 16px 24px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+      color: var(--gray);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    
+    .profile-tabs .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+    
+    .profile-tabs .tab:hover:not(.active) {
+      color: var(--dark);
+    }
+    
+    .tab-content {
+      padding: 24px;
+      min-height: 500px;
+    }
+    
+    /* Personal Data Tab */
+    .personal-data .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    
+    .data-group {
+      background: var(--light);
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    
+    .data-group h4 {
+      margin: 0 0 16px 0;
+      color: var(--primary);
+      font-size: 16px;
+    }
+    
+    .data-item {
+      margin-bottom: 12px;
+    }
+    
+    .data-item label {
+      display: block;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+    
+    .data-item p {
+      margin: 0;
+      color: var(--gray);
+    }
+    
+    .data-group.full-width {
+      grid-column: 1 / -1;
+    }
+    
+    .tags-container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    /* Diets Tab */
+    .diet-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .diet-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+      transition: transform 0.2s ease;
+    }
+    
+    .diet-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .diet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    
+    .diet-header h4 {
+      margin: 0;
+      color: var(--dark);
+    }
+    
+    .diet-date {
+      font-size: 12px;
+      color: var(--gray);
+    }
+    
+    .diet-info {
+      margin-bottom: 16px;
+    }
+    
+    .diet-objective {
+      font-size: 14px;
+      color: var(--gray);
+      margin-bottom: 8px;
+    }
+    
+    .diet-stats {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+    }
+    
+    .diet-stats .stat {
+      background: var(--light);
+      padding: 4px 8px;
+      border-radius: 4px;
+      color: var(--gray);
+    }
+    
+    .diet-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .see-more {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    /* Consultations Tab */
+    .consultation-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .consultation-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: var(--light);
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .consultation-date {
+      text-align: center;
+      min-width: 80px;
+    }
+    
+    .date-day {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    .date-month {
+      font-size: 12px;
+      color: var(--gray);
+      text-transform: uppercase;
+    }
+    
+    .date-year {
+      font-size: 12px;
+      color: var(--gray);
+    }
+    
+    .consultation-content {
+      flex: 1;
+    }
+    
+    .consultation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .consultation-header h4 {
+      margin: 0;
+      color: var(--dark);
+    }
+    
+    .consultation-time {
+      font-size: 14px;
+      color: var(--gray);
+    }
+    
+    .consultation-notes {
+      margin-bottom: 8px;
+    }
+    
+    .consultation-notes p {
+      margin: 0;
+      color: var(--gray);
+      font-size: 14px;
+    }
+    
+    .consultation-modules {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .module-badge {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    
+    .consultation-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    /* Anthropometry Tab */
+    .anthropometry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    
+    .anthropometry-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+    }
+    
+    .anthro-date {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .anthro-measures {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .measure {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+    }
+    
+    .measure label {
+      font-weight: 500;
+      color: var(--dark);
+      font-size: 14px;
+    }
+    
+    .measure span {
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    /* Anamnesis Tab */
+    .anamnesis-content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .anamnesis-group {
+      background: var(--light);
+      padding: 16px;
+      border-radius: 8px;
+      border-left: 4px solid var(--info);
+    }
+    
+    .anamnesis-group h4 {
+      margin: 0 0 8px 0;
+      color: var(--info);
+      font-size: 16px;
+    }
+    
+    .anamnesis-group p {
+      margin: 0;
+      color: var(--dark);
+      line-height: 1.5;
+    }
+    
+    .anamnesis-history {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--light);
+      border-radius: 6px;
+    }
+    
+    .history-date {
+      font-weight: 500;
+      color: var(--dark);
+    }
+    
+    /* History Tab */
+    .history-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .timeline-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: var(--light);
+      border-radius: 8px;
+      border-left: 4px solid var(--success);
+    }
+    
+    .timeline-date {
+      min-width: 100px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    .timeline-content {
+      flex: 1;
+    }
+    
+    .timeline-type {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+    
+    .timeline-details {
+      color: var(--gray);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    
+    .timeline-modules {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .timeline-modules .module {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    
+    /* Empty States no perfil */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray);
+    }
+    
+    .empty-state .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+    
+    .empty-state p {
+      margin-bottom: 24px;
+    }
+    
+    .empty-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .profile-header {
+        flex-direction: column;
+      }
+    
+      .patient-photo-section {
+        flex-direction: column;
+        text-align: center;
+      }
+    
+      .profile-actions {
+        width: 100%;
+        flex-direction: row;
+      }
+    
+      .profile-actions .btn {
+        flex: 1;
+      }
+    
+      .data-grid {
+        grid-template-columns: 1fr;
+      }
+    
+      .diet-cards {
+        grid-template-columns: 1fr;
+      }
+    
+      .anthropometry-grid {
+        grid-template-columns: 1fr;
+      }
+    
+      .consultation-item {
+        flex-direction: column;
+      }
+    
+      .consultation-date {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+    
+      .date-day, .date-month, .date-year {
+        display: inline;
+      }
+    
+      .timeline-item {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
