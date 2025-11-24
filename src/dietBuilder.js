@@ -301,12 +301,19 @@ window.removeFood = (mealName, index) => {
   renderDietData();
 };
 
+// Esta função precisa ser definida globalmente ou importada
+// Por enquanto, vamos recarregar a página como fallback
 window.showDashboard = () => {
   if (state.unsavedChanges) {
     if (!confirm('Você tem alterações não salvas. Deseja realmente voltar ao painel?')) {
       return;
     }
   }
-  // Precisamos importar showDashboard ou usar uma abordagem diferente
-  window.location.reload(); // Solução temporária
+  // Solução temporária - recarregar a página
+  window.location.reload();
 };
+
+// Adicionar função global para openAddFoodModal se não estiver disponível
+if (typeof window.openAddFoodModal === 'undefined') {
+  window.openAddFoodModal = openAddFoodModal;
+}
