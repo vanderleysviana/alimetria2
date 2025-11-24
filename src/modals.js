@@ -1,10 +1,10 @@
-// src/modals.js - VERSÃO CORRIGIDA SEM NANOID
+// src/modals.js - VERSÃO CORRIGIDA COM IMPORTAÇÕES CORRETAS
 import { state } from './state.js';
 import { renderMealList, renderMeals } from './ui.js';
 import { generateId } from './idGenerator.js';
 
 export function openAddFoodModal(mealName){
-  // prevent editing if no patient + diet selected
+  // prevent editing if no patient selected
   if(!state.currentPatient){
     alert('Selecione um paciente para começar.');
     return;
@@ -199,7 +199,7 @@ export function openRegisterFoodModal(mealName, defaultQty=100){
       return; 
     }
     
-    const id = generateId(); // ← Usando nossa função generateId
+    const id = generateId();
     
     const obj = {
       id,
@@ -238,3 +238,6 @@ export function openRegisterFoodModal(mealName, defaultQty=100){
   backdrop.appendChild(modal); 
   modalRoot.appendChild(backdrop);
 }
+
+// Adicionar função global para uso em eventos
+window.openRegisterFoodModal = openRegisterFoodModal;
