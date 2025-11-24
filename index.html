@@ -7,198 +7,822 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --azul-escuro:#1A73E8;
-      --azul-medio:#4F8FF7;
-      --azul-claro:#DCEBFF;
-      --branco:#FFFFFF;
-      --texto:#2b2b2b;
-      --card-radius:12px;
-      --card-padding:20px;
-      --gap:24px;
-    }
-    html,body,#app{height:100%;margin:0;font-family:Inter,Roboto,system-ui,Segoe UI,Arial;background:linear-gradient(180deg,var(--branco),#f7fbff);}
-    .container{max-width:980px;margin:16px auto;padding:16px;box-sizing:border-box;}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:12px;}
-    h1{font-size:18px;color:var(--azul-escuro);margin:0}
-    .patient{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
-    select,button,input{font-family:inherit}
-    .layout{display:flex;flex-direction:column;gap:var(--gap)}
-    .meal-card{background:var(--azul-claro);border-radius:var(--card-radius);padding:var(--card-padding);box-shadow:0 6px 14px rgba(26,115,232,0.08);}
-    .meal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
-    .btn{background:var(--azul-medio);color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;transition:background 0.2s;}
-    .btn:hover{background:var(--azul-escuro)}
-    .btn:disabled{background:#94a3b8;cursor:not-allowed;}
-    .food-list{display:flex;flex-direction:column;gap:8px}
-    .food-item{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.6);padding:8px;border-radius:8px;flex-wrap:wrap;gap:8px;}
-    .totals{margin-top:12px;background:rgba(255,255,255,0.5);padding:10px;border-radius:8px;display:flex;gap:12px;flex-wrap:wrap}
-    .summary{position:static;bottom:16px;margin-top:20px;padding:16px;border-radius:12px;background:linear-gradient(90deg,var(--azul-claro),#f0f7ff);box-shadow:0 8px 30px rgba(26,115,232,0.06)}
-    .alerts{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-    .alert{border-left:4px solid var(--azul-escuro);background:#fff;padding:10px;border-radius:8px;color:var(--texto)}
-    /* modal */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(10,30,80,0.35);display:flex;align-items:center;justify-content:center;z-index:40}
-    .modal{background:var(--branco);padding:18px;border-radius:12px;width:92%;max-width:640px;border:1px solid rgba(79,143,247,0.18);max-height:90vh;overflow-y:auto;}
-    .modal h3{color:var(--azul-escuro);margin:0 0 8px 0}
-    .field{display:flex;flex-direction:column;margin-bottom:8px}
-    .field label{font-size:13px;color:#334155;margin-bottom:4px}
-    .field input, .field textarea{padding:8px;border-radius:8px;border:1px solid #dbeafe}
-    table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
-    th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(0,0,0,0.04)}
-    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-    @media(min-width:900px){ .container{padding:24px} }
-    #saveDietFloating{
-      position:fixed;
-      right:18px;
-      bottom:18px;
-      z-index:60;
-      border-radius:12px;
-      padding:12px 16px;
-      background:#10b981;
-      color:white;
-      box-shadow:0 8px 20px rgba(16,185,129,0.18);
-      display:none;
-      border:none;
-      cursor:pointer;
-      font-size:14px;
-    }
-    
-    /* Status messages */
-    .status-message{padding:16px;border-radius:8px;margin:16px 0;text-align:center;}
-    .status-success{background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;}
-    .status-error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
-    .status-info{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;}
-    
-    /* Patient display */
-    #patientDisplay{min-height:44px;display:flex;align-items:center;}
-
-    /* Estilos adicionais para o sistema atualizado */
-    .patient-row {
-      transition: all 0.3s ease;
+    /* ESTILOS GLOBAIS ATUALIZADOS */
+    :root {
+      --primary: #6366F1;
+      --primary-dark: #4338CA;
+      --secondary: #8B5CF6;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --dark: #1F2937;
+      --light: #F9FAFB;
+      --border: #E5E7EB;
+      --text: #374151;
+      --text-light: #6B7280;
     }
 
-    .patient-row:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    * {
+      box-sizing: border-box;
     }
 
-    .tab-btn {
-      background: none;
-      border: none;
-      padding: 12px 20px;
+    html, body, #app {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', Roboto, system-ui, Segoe UI, Arial, sans-serif;
+      background-color: #f5f7fa;
+      color: var(--text);
+    }
+
+    /* Dashboard Styles */
+    .dashboard-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 32px;
+    }
+
+    .header-content h1 {
+      font-size: 2.5rem;
+      color: var(--dark);
+      margin: 0 0 8px 0;
+      font-weight: 700;
+    }
+
+    .header-content p {
+      font-size: 1.1rem;
+      color: var(--text-light);
+      margin: 0;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-icon {
+      font-size: 2.5rem;
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--light);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--dark);
+      line-height: 1;
+    }
+
+    .stat-label {
+      color: var(--text-light);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .dashboard-content {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 32px;
+    }
+
+    .content-section {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .section-header h2 {
+      font-size: 1.5rem;
+      color: var(--dark);
+      margin: 0;
+    }
+
+    /* Consultations List */
+    .consultation-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.2s ease;
+    }
+
+    .consultation-item:hover {
+      background-color: var(--light);
+    }
+
+    .consultation-date {
+      text-align: center;
+      padding: 8px;
+      background: var(--light);
+      border-radius: 8px;
+      min-width: 60px;
+    }
+
+    .date-day {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .date-month {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      text-transform: uppercase;
+    }
+
+    .consultation-info {
+      flex: 1;
+    }
+
+    .patient-name {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+
+    .consultation-time {
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+
+    /* Quick Actions */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .quick-action-card {
+      background: var(--light);
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
       cursor: pointer;
-      border-bottom: 3px solid transparent;
-      color: #6b7280;
+      transition: all 0.2s ease;
+      border: 2px solid transparent;
+    }
+
+    .quick-action-card:hover {
+      background: white;
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .action-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    .action-title {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    .action-description {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      line-height: 1.4;
+    }
+
+    /* Recent Patients */
+    .patient-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .patient-card:hover {
+      background-color: var(--light);
+    }
+
+    .patient-avatar {
+      font-size: 1.5rem;
+      padding: 8px;
+      background: var(--light);
+      border-radius: 8px;
+    }
+
+    .patient-info {
+      flex: 1;
+    }
+
+    .patient-name {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+
+    .patient-meta {
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+
+    .patient-badge {
+      background: var(--primary);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Diet Builder Styles */
+    .diet-builder {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .diet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .patient-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-back {
+      background: var(--light);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .patient-details h1 {
+      margin: 0 0 8px 0;
+      color: var(--dark);
+    }
+
+    .patient-selected {
+      color: var(--text-light);
+      font-size: 1.1rem;
+    }
+
+    .diet-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .diet-content {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 32px;
+    }
+
+    .summary-panel {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border);
+      height: fit-content;
+      position: sticky;
+      top: 24px;
+    }
+
+    .summary-header {
+      margin-bottom: 20px;
+    }
+
+    .summary-header h3 {
+      margin: 0 0 16px 0;
+      color: var(--dark);
+    }
+
+    .summary-stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stat-badge {
+      background: var(--primary);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .nutrition-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .nutrition-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nutrition-label {
+      color: var(--text);
       font-weight: 500;
-      transition: all 0.3s ease;
     }
 
-    .tab-btn:hover {
-      color: #374151;
-      background: #f9fafb;
+    .nutrition-value {
+      color: var(--dark);
+      font-weight: 600;
     }
 
-    .tab-btn.active {
-      color: #8B5CF6;
-      border-bottom-color: #8B5CF6;
-      background: #f8fafc;
+    .nutrition-alerts {
+      margin-top: 20px;
     }
 
-    .status-success {
-      background: #d1fae5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
+    .alert {
       padding: 12px 16px;
       border-radius: 8px;
-      margin: 16px 0;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
     }
 
-    .status-error {
-      background: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-      padding: 12px 16px;
+    .alert-warning {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #F59E0B;
+    }
+
+    .alert-success {
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #10B981;
+    }
+
+    /* Meals Container */
+    .meals-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .meal-section {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border);
+    }
+
+    .meal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .meal-header h3 {
+      margin: 0;
+      color: var(--dark);
+    }
+
+    .food-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100px;
+    }
+
+    .empty-meal {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-light);
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .food-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: var(--light);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .food-info {
+      flex: 1;
+    }
+
+    .food-name {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+
+    .food-quantity {
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+
+    .food-nutrition {
+      display: flex;
+      gap: 8px;
+      margin: 0 16px;
+    }
+
+    .nutrition-badge {
+      background: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .meal-totals {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 2px solid var(--border);
+    }
+
+    .meal-summary {
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 20px;
       border-radius: 8px;
-      margin: 16px 0;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .status-info {
-      background: #dbeafe;
-      color: #1e40af;
-      border: 1px solid #93c5fd;
-      padding: 12px 16px;
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 0.8rem;
+    }
+
+    .btn-back:hover {
+      background: var(--border);
+    }
+
+    /* Status Messages */
+    .status-message {
+      padding: 16px;
       border-radius: 8px;
-      margin: 16px 0;
+      margin-bottom: 20px;
+      font-weight: 500;
     }
 
-    /* Melhorias de responsividade */
+    .status-warning {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #F59E0B;
+    }
+
+    /* Empty States */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-light);
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      margin-bottom: 24px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .dashboard-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .diet-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .summary-panel {
+        position: static;
+      }
+    }
+
     @media (max-width: 768px) {
-      .patient-row {
+      .dashboard-header {
         flex-direction: column;
         gap: 16px;
       }
       
-      .patient-row .actions {
-        width: 100%;
-      }
-      
-      .tab-btn {
-        padding: 10px 16px;
-        font-size: 14px;
-      }
-      
-      .container {
-        padding: 12px;
-      }
-      
-      header {
+      .diet-header {
         flex-direction: column;
-        align-items: flex-start;
+        gap: 16px;
       }
       
-      .patient {
+      .diet-actions {
         width: 100%;
-        justify-content: space-between;
+        justify-content: stretch;
+      }
+      
+      .diet-actions .btn {
+        flex: 1;
+        justify-content: center;
+      }
+      
+      .food-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      
+      .food-nutrition {
+        justify-content: center;
+        margin: 0;
       }
     }
 
-    /* Animações suaves */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Modal Styles */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
     }
 
     .modal {
-      animation: fadeIn 0.3s ease;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      max-width: 90%;
+      max-height: 90%;
+      overflow: auto;
+      width: 100%;
     }
 
-    .meal-card {
-      animation: fadeIn 0.4s ease;
+    .modal-header {
+      padding: 24px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    /* Estilos para a tela de login */
-    .auth-tab {
-      transition: all 0.3s ease;
+    .modal-body {
+      padding: 24px;
     }
 
-    .auth-tab.active {
+    .modal-footer {
+      padding: 0 24px 24px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Form Styles */
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--dark);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .tab.active {
+      border-bottom-color: var(--primary);
+      color: var(--primary);
       font-weight: 600;
     }
 
-    /* Loading states */
-    .loading {
-      opacity: 0.7;
-      pointer-events: none;
+    .tab:hover:not(.active) {
+      background: var(--light);
     }
 
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Login Screen */
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+
+    .login-card {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-header h1 {
+      font-size: 2rem;
+      color: var(--dark);
+      margin: 0 0 8px 0;
+    }
+
+    .login-header p {
+      color: var(--text-light);
+      margin: 0;
+    }
+
+    .auth-tabs {
+      display: flex;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .auth-tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .auth-tab.active {
+      border-bottom-color: var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .auth-message {
+      text-align: center;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 16px;
+      font-size: 0.9rem;
+    }
+
+    .auth-message.error {
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+
+    .auth-message.success {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    /* Loading Spinner */
     .spinner {
       border: 2px solid #f3f3f3;
-      border-top: 2px solid #3498db;
+      border-top: 2px solid var(--primary);
       border-radius: 50%;
       width: 20px;
       height: 20px;
       animation: spin 1s linear infinite;
       display: inline-block;
-      margin-right: 8px;
     }
 
     @keyframes spin {
@@ -206,65 +830,34 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Melhorias de acessibilidade */
-    @media (prefers-reduced-motion: reduce) {
-      .patient-row,
-      .modal,
-      .meal-card,
-      .auth-tab {
-        transition: none;
-        animation: none;
-      }
+    /* Error Screen */
+    .error-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+      padding: 20px;
     }
 
-    /* Focus styles para acessibilidade */
-    button:focus,
-    input:focus,
-    select:focus,
-    textarea:focus {
-      outline: 2px solid #3b82f6;
-      outline-offset: 2px;
+    .error-content h1 {
+      font-size: 2rem;
+      margin-bottom: 16px;
     }
 
-    /* Dark mode support */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --texto: #e5e7eb;
-      }
-      
-      .meal-card {
-        background: #1f2937;
-      }
-      
-      .food-item {
-        background: #374151;
-      }
-      
-      .alert {
-        background: #374151;
-        color: #e5e7eb;
-      }
+    .error-content p {
+      margin-bottom: 24px;
+      opacity: 0.8;
     }
   </style>
-
-  <script type="importmap">
-  {
-    "imports": {
-      "nanoid": "https://esm.sh/nanoid@4.0.2",
-      "jspdf": "https://esm.sh/jspdf@2.5.1",
-      "chart.js": "https://esm.sh/chart.js@4.4.0",
-      "chart.js/auto": "https://esm.sh/chart.js@4.4.0/auto",
-      "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-    }
-  }
-  </script>
 </head>
 <body>
   <!-- Aplicação principal -->
   <div id="app">
-    <!-- O conteúdo será injetado aqui pelo JavaScript -->
     <!-- Durante o carregamento mostrar um loading -->
-    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="login-container">
       <div style="text-align: center; color: white;">
         <div style="font-size: 4rem; margin-bottom: 1rem;">🍎</div>
         <h1 style="margin-bottom: 0.5rem;">Sistema Nutricional</h1>
@@ -289,12 +882,12 @@
     import './src/patientManager.js';
     import './src/patientDiets.js';
     import './src/consultations.js';
-    import './src/patients.js';
+    import './src/dashboard.js';
+    import './src/dietBuilder.js';
     import './src/app.js';
 
     // Remover loading screen quando a aplicação carregar
-    
-     
+    // O app.js já cuida disso
   </script>
 
   <!-- Analytics/Error Tracking (opcional) -->
