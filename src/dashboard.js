@@ -1,7 +1,7 @@
-// src/dashboard.js - DASHBOARD CORRIGIDO
+// src/dashboard.js - DASHBOARD COMPLETO E ATUALIZADO
 import { state, loadRecentConsultations, loadStats, selectPatient } from './state.js';
 import { openPatientManager } from './patientManager.js';
-import { openPatientConsultations } from './consultations.js';
+import { openPatientConsultations, openConsultationManager } from './consultations.js';
 import { showDietBuilder } from './dietBuilder.js';
 
 export function showDashboard() {
@@ -266,10 +266,7 @@ window.selectPatientFromDashboard = async (patientId) => {
   }
 };
 
-window.openConsultationManager = () => {
-  // Implementar abertura do gerenciador de consultas
-  alert('Gerenciador de consultas será implementado aqui');
-};
+window.openConsultationManager = openConsultationManager;
 
 window.openReports = () => {
   // Implementar abertura de relatórios
