@@ -1,4 +1,4 @@
-// src/consultations.js - SISTEMA COMPLETO DE CONSULTAS
+// src/consultations.js - SISTEMA COMPLETO DE CONSULTAS CORRIGIDO
 import { state, loadPatientConsultations } from './state.js';
 import supabase, { ensureAuth } from './supabase.js';
 
@@ -62,6 +62,7 @@ export function openPatientConsultations(patientId) {
   tabsContainer.appendChild(tabs);
   
   const tabsContent = document.createElement('div');
+  tabsContent.id = 'consultationTabsContent';
   tabsContent.style.minHeight = '400px';
   
   modal.appendChild(tabsContainer);
@@ -92,8 +93,16 @@ export function openPatientConsultations(patientId) {
 
 function switchConsultationTab(tab, container, patientId) {
   // Atualizar botões de aba
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  event.target.classList.add('active');
+  const tabButtons = container.parentElement.querySelectorAll('.tab-btn');
+  tabButtons.forEach(btn => btn.classList.remove('active'));
+  
+  // Encontrar e ativar o botão correto
+  const activeTab = Array.from(tabButtons).find(btn => 
+    btn.textContent.includes(tab === 'lista' ? 'Lista' : 'Estatísticas')
+  );
+  if (activeTab) {
+    activeTab.classList.add('active');
+  }
   
   container.innerHTML = '';
   
@@ -114,7 +123,7 @@ function renderConsultationList(patientId, container) {
         <div style="font-size: 64px; margin-bottom: 16px;">🩺</div>
         <h3 style="color: #374151; margin-bottom: 8px;">Nenhuma consulta encontrada</h3>
         <p style="margin-bottom: 24px;">Comece criando a primeira consulta para este paciente.</p>
-        <button class="btn" style="background: #8B5CF6;" onclick="openConsultationForm('${patientId}')">
+        <button class="btn" style="background: #8B5CF6;" onclick="window.openConsultationForm('${patientId}')">
           ➕ Criar Primeira Consulta
         </button>
       </div>
@@ -142,7 +151,7 @@ function renderConsultationList(patientId, container) {
     });
     
     card.innerHTML = `
-      <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
         <div style="flex: 1;">
           <h4 style="margin: 0 0 8px 0; color: #1f2937;">${data} às ${hora}</h4>
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -155,13 +164,13 @@ function renderConsultationList(patientId, container) {
           </div>
         </div>
         <div style="display: flex; gap: 8px;">
-          <button class="btn" style="background: #3b82f6;" onclick="openConsultationDetail('${patientId}', '${consulta.id}')">
+          <button class="btn" style="background: #3b82f6;" onclick="window.openConsultationDetail('${patientId}', '${consulta.id}')">
             👁️ Detalhes
           </button>
-          <button class="btn" style="background: #f59e0b;" onclick="openConsultationForm('${patientId}', '${consulta.id}')">
+          <button class="btn" style="background: #f59e0b;" onclick="window.openConsultationForm('${patientId}', '${consulta.id}')">
             ✏️ Editar
           </button>
-          <button class="btn" style="background: #ef4444;" onclick="deleteConsultation('${patientId}', '${consulta.id}')">
+          <button class="btn" style="background: #ef4444;" onclick="window.deleteConsultation('${patientId}', '${consulta.id}')">
             🗑️ Excluir
           </button>
         </div>
@@ -219,7 +228,7 @@ function renderConsultationStats(patientId, container) {
         <h4 style="margin: 0 0 16px 0; color: #374151;">📊 Consultas por Tipo</h4>
         <div style="display: flex; flex-direction: column; gap: 12px;">
           ${Object.entries(tipos).map(([tipo, count]) => `
-            <div style="display: flex; justify-content: between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="color: #6b7280;">${tipo}</span>
               <span style="font-weight: bold; color: #1f2937;">${count}</span>
             </div>
@@ -231,7 +240,7 @@ function renderConsultationStats(patientId, container) {
         <h4 style="margin: 0 0 16px 0; color: #374151;">📅 Consultas por Mês</h4>
         <div style="display: flex; flex-direction: column; gap: 12px;">
           ${Object.entries(porMes).map(([mes, count]) => `
-            <div style="display: flex; justify-content: between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="color: #6b7280;">${mes}</span>
               <span style="font-weight: bold; color: #1f2937;">${count}</span>
             </div>
@@ -438,7 +447,7 @@ window.deleteConsultation = async (patientId, consultationId) => {
     await loadPatientConsultations(patientId);
     
     // Recarregar a lista
-    const container = document.querySelector('.modal .tabs-content');
+    const container = document.getElementById('consultationTabsContent');
     if (container) {
       renderConsultationList(patientId, container);
     }
@@ -513,7 +522,7 @@ window.openConsultationDetail = (patientId, consultationId) => {
         <div style="grid-column: 1 / -1;">
           <strong>Observações:</strong><br>
           ${consultation.observacoes}
-      </div>
+        </div>
       ` : ''}
     </div>
   `;
