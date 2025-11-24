@@ -1,5 +1,5 @@
 // src/consultations.js - SISTEMA COMPLETO DE CONSULTAS
-import { state, loadPatientConsultations } from './state.js';
+import { state, loadPatientConsultations, loadPatientsFromDB } from './state.js';
 import supabase, { ensureAuth } from './supabase.js';
 
 export function openPatientConsultations(patientId) {
@@ -569,4 +569,413 @@ window.openConsultationDetail = (patientId, consultationId) => {
   modal.appendChild(content);
   backdrop.appendChild(modal);
   root.appendChild(backdrop);
+};
+
+// Gerenciador geral de consultas
+export function openConsultationManager() {
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = '';
+  
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.maxWidth = '1200px';
+  modal.style.width = '98%';
+  
+  const header = document.createElement('div');
+  header.style.display = 'flex';
+  header.style.justifyContent = 'space-between';
+  header.style.alignItems = 'center';
+  header.style.marginBottom = '20px';
+  
+  const title = document.createElement('h3');
+  title.textContent = '📅 Gerenciador de Consultas';
+  title.style.color = '#1565C0';
+  title.style.margin = '0';
+  
+  const newBtn = document.createElement('button');
+  newBtn.className = 'btn btn-primary';
+  newBtn.innerHTML = '➕ Nova Consulta';
+  newBtn.onclick = () => openConsultationFormManager();
+  
+  header.appendChild(title);
+  header.appendChild(newBtn);
+  modal.appendChild(header);
+
+  // Container principal com abas
+  const tabsContainer = document.createElement('div');
+  tabsContainer.style.marginBottom = '20px';
+  
+  const tabs = document.createElement('div');
+  tabs.className = 'tabs';
+  
+  const tabLista = document.createElement('div');
+  tabLista.className = 'tab active';
+  tabLista.textContent = '📋 Todas as Consultas';
+  tabLista.onclick = () => switchConsultationManagerTab('lista', tabsContent);
+  
+  const tabCalendario = document.createElement('div');
+  tabCalendario.className = 'tab';
+  tabCalendario.textContent = '📅 Visualização por Data';
+  tabCalendario.onclick = () => switchConsultationManagerTab('calendario', tabsContent);
+  
+  tabs.appendChild(tabLista);
+  tabs.appendChild(tabCalendario);
+  tabsContainer.appendChild(tabs);
+  
+  const tabsContent = document.createElement('div');
+  tabsContent.id = 'consultationManagerTabsContent';
+  tabsContent.style.minHeight = '400px';
+  
+  modal.appendChild(tabsContainer);
+  modal.appendChild(tabsContent);
+  
+  // Carregar e mostrar lista inicial
+  switchConsultationManagerTab('lista', tabsContent);
+
+  const footer = document.createElement('div');
+  footer.className = 'modal-footer';
+  
+  const close = document.createElement('button');
+  close.className = 'btn';
+  close.style.background = '#94a3b8';
+  close.textContent = 'Fechar';
+  close.onclick = () => backdrop.remove();
+  
+  footer.appendChild(close);
+  modal.appendChild(footer);
+
+  backdrop.appendChild(modal);
+  root.appendChild(backdrop);
+}
+
+function switchConsultationManagerTab(tab, container) {
+  // Atualizar botões de aba
+  const tabs = container.parentElement.querySelector('.tabs');
+  const tabButtons = tabs.querySelectorAll('.tab');
+  tabButtons.forEach(btn => btn.classList.remove('active'));
+  
+  // Encontrar e ativar o botão correto
+  const activeTab = Array.from(tabButtons).find(btn => 
+    btn.textContent.includes(tab === 'lista' ? 'Todas' : 'Visualização')
+  );
+  if (activeTab) {
+    activeTab.classList.add('active');
+  }
+  
+  container.innerHTML = '<div class="loading">Carregando...</div>';
+  
+  if (tab === 'lista') {
+    renderConsultationManagerList(container);
+  } else if (tab === 'calendario') {
+    renderConsultationCalendar(container);
+  }
+}
+
+async function renderConsultationManagerList(container) {
+  try {
+    // Carregar todas as consultas dos últimos 60 dias
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 60);
+    
+    const { data: consultations, error } = await supabase
+      .from('consultations')
+      .select(`
+        *,
+        patients (id, nome, genero, telefone, email)
+      `)
+      .gte('data_horario', startDate.toISOString())
+      .order('data_horario', { ascending: false });
+    
+    if (error) throw error;
+    
+    if (!consultations || consultations.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div style="font-size: 64px; margin-bottom: 16px;">📅</div>
+          <h3 style="color: #374151; margin-bottom: 8px;">Nenhuma consulta encontrada</h3>
+          <p style="margin-bottom: 24px;">Agende a primeira consulta para começar.</p>
+          <button class="btn btn-primary" onclick="openConsultationFormManager()">
+            ➕ Agendar Primeira Consulta
+          </button>
+        </div>
+      `;
+      return;
+    }
+    
+    const list = document.createElement('div');
+    list.style.display = 'flex';
+    list.style.flexDirection = 'column';
+    list.style.gap = '12px';
+    
+    consultations.forEach(consultation => {
+      const card = document.createElement('div');
+      card.style.background = 'white';
+      card.style.border = '1px solid #e5e7eb';
+      card.style.borderRadius = '12px';
+      card.style.padding = '20px';
+      card.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+      
+      const data = new Date(consultation.data_horario).toLocaleDateString('pt-BR');
+      const hora = new Date(consultation.data_horario).toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', minute: '2-digit' 
+      });
+      
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div style="flex: 1;">
+            <h4 style="margin: 0 0 8px 0; color: #1f2937;">${data} às ${hora}</h4>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
+              <span style="background: #e0e7ff; color: #3730a3; padding: 4px 8px; border-radius: 6px; font-size: 12px;">
+                ${consultation.tipo || 'Consulta'}
+              </span>
+              <span style="background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 6px; font-size: 12px;">
+                ${consultation.patients?.nome || 'Paciente não encontrado'}
+              </span>
+            </div>
+            ${consultation.observacoes ? `<p style="color: #6b7280; margin: 0; font-size: 14px;">${consultation.observacoes}</p>` : ''}
+          </div>
+          <div style="display: flex; gap: 8px; flex-direction: column;">
+            <button class="btn btn-primary" onclick="openConsultationDetailManager('${consultation.patient_id}', '${consultation.id}')">
+              👁️ Detalhes
+            </button>
+            <button class="btn" style="background: #f59e0b;" onclick="openConsultationFormManager('${consultation.patient_id}', '${consultation.id}')">
+              ✏️ Editar
+            </button>
+            <button class="btn btn-danger" onclick="deleteConsultationManager('${consultation.id}')">
+              🗑️ Excluir
+            </button>
+          </div>
+        </div>
+      `;
+      
+      list.appendChild(card);
+    });
+    
+    container.innerHTML = '';
+    container.appendChild(list);
+    
+  } catch (error) {
+    console.error('Erro ao carregar consultas:', error);
+    container.innerHTML = '<div style="text-align: center; padding: 40px; color: #dc2626;">Erro ao carregar consultas.</div>';
+  }
+}
+
+function renderConsultationCalendar(container) {
+  container.innerHTML = `
+    <div style="background: white; padding: 24px; border-radius: 8px; border: 1px solid #e5e7eb;">
+      <h4 style="margin: 0 0 16px 0; color: #374151;">📅 Consultas por Data</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <div>
+          <h5 style="color: #6b7280; margin-bottom: 12px;">Próximos 7 Dias</h5>
+          <div id="nextWeekConsultations" class="loading">Carregando...</div>
+        </div>
+        <div>
+          <h5 style="color: #6b7280; margin-bottom: 12px;">Este Mês</h5>
+          <div id="thisMonthConsultations" class="loading">Carregando...</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  loadCalendarData();
+}
+
+async function loadCalendarData() {
+  try {
+    // Consultas dos próximos 7 dias
+    const nextWeekStart = new Date();
+    const nextWeekEnd = new Date();
+    nextWeekEnd.setDate(nextWeekEnd.getDate() + 7);
+    
+    const { data: nextWeekData, error: nextWeekError } = await supabase
+      .from('consultations')
+      .select(`
+        *,
+        patients (nome)
+      `)
+      .gte('data_horario', nextWeekStart.toISOString())
+      .lte('data_horario', nextWeekEnd.toISOString())
+      .order('data_horario', { ascending: true });
+    
+    // Consultas deste mês
+    const thisMonthStart = new Date();
+    thisMonthStart.setDate(1);
+    thisMonthStart.setHours(0, 0, 0, 0);
+    
+    const thisMonthEnd = new Date();
+    thisMonthEnd.setMonth(thisMonthEnd.getMonth() + 1);
+    thisMonthEnd.setDate(0);
+    thisMonthEnd.setHours(23, 59, 59, 999);
+    
+    const { data: thisMonthData, error: thisMonthError } = await supabase
+      .from('consultations')
+      .select(`
+        *,
+        patients (nome)
+      `)
+      .gte('data_horario', thisMonthStart.toISOString())
+      .lte('data_horario', thisMonthEnd.toISOString())
+      .order('data_horario', { ascending: true });
+    
+    if (nextWeekError) throw nextWeekError;
+    if (thisMonthError) throw thisMonthError;
+    
+    // Renderizar próximos 7 dias
+    const nextWeekContainer = document.getElementById('nextWeekConsultations');
+    if (nextWeekContainer) {
+      if (nextWeekData && nextWeekData.length > 0) {
+        nextWeekContainer.innerHTML = nextWeekData.map(consult => `
+          <div style="padding: 8px; border-left: 3px solid #3b82f6; background: #f0f9ff; margin-bottom: 8px; border-radius: 4px;">
+            <div style="font-weight: 600; color: #1e40af;">${new Date(consult.data_horario).toLocaleDateString('pt-BR')}</div>
+            <div style="font-size: 14px; color: #374151;">${consult.patients.nome} - ${consult.tipo}</div>
+            <div style="font-size: 12px; color: #6b7280;">${new Date(consult.data_horario).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+          </div>
+        `).join('');
+      } else {
+        nextWeekContainer.innerHTML = '<div style="color: #6b7280; text-align: center; padding: 20px;">Nenhuma consulta agendada</div>';
+      }
+    }
+    
+    // Renderizar este mês
+    const thisMonthContainer = document.getElementById('thisMonthConsultations');
+    if (thisMonthContainer) {
+      if (thisMonthData && thisMonthData.length > 0) {
+        // Agrupar por data
+        const groupedByDate = {};
+        thisMonthData.forEach(consult => {
+          const date = new Date(consult.data_horario).toLocaleDateString('pt-BR');
+          if (!groupedByDate[date]) {
+            groupedByDate[date] = [];
+          }
+          groupedByDate[date].push(consult);
+        });
+        
+        thisMonthContainer.innerHTML = Object.entries(groupedByDate).map(([date, consults]) => `
+          <div style="margin-bottom: 12px;">
+            <div style="font-weight: 600; color: #374151; margin-bottom: 4px;">${date}</div>
+            ${consults.map(consult => `
+              <div style="padding: 6px; background: #f8fafc; margin-bottom: 4px; border-radius: 4px; font-size: 14px;">
+                <span style="color: #3b82f6;">${new Date(consult.data_horario).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                - ${consult.patients.nome} (${consult.tipo})
+              </div>
+            `).join('')}
+          </div>
+        `).join('');
+      } else {
+        thisMonthContainer.innerHTML = '<div style="color: #6b7280; text-align: center; padding: 20px;">Nenhuma consulta este mês</div>';
+      }
+    }
+    
+  } catch (error) {
+    console.error('Erro ao carregar dados do calendário:', error);
+  }
+}
+
+// Função para abrir formulário de consulta a partir do gerenciador
+window.openConsultationFormManager = async (patientId = null, consultationId = null) => {
+  await loadPatientsFromDB(); // Garantir que pacientes estão carregados
+  
+  if (!patientId) {
+    // Se não há patientId, mostrar seletor de paciente
+    const root = document.getElementById('modalRoot');
+    root.innerHTML = '';
+    
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.maxWidth = '500px';
+    
+    const title = document.createElement('h3');
+    title.textContent = 'Selecionar Paciente';
+    title.style.color = '#1565C0';
+    title.style.marginBottom = '20px';
+    
+    const patientList = document.createElement('div');
+    patientList.style.maxHeight = '400px';
+    patientList.style.overflowY = 'auto';
+    patientList.style.display = 'flex';
+    patientList.style.flexDirection = 'column';
+    patientList.style.gap = '8px';
+    
+    Object.values(state.patients).forEach(patient => {
+      const patientBtn = document.createElement('button');
+      patientBtn.className = 'btn';
+      patientBtn.style.background = '#f8fafc';
+      patientBtn.style.border = '1px solid #e2e8f0';
+      patientBtn.style.justifyContent = 'flex-start';
+      patientBtn.style.textAlign = 'left';
+      patientBtn.innerHTML = `
+        <div style="font-weight: 600;">${patient.nome}</div>
+        <div style="font-size: 12px; color: #64748b;">
+          ${patient.idade ? `${patient.idade} anos` : ''} ${patient.genero ? `• ${patient.genero}` : ''}
+        </div>
+      `;
+      patientBtn.onclick = () => {
+        backdrop.remove();
+        openConsultationForm(patient.id, consultationId);
+      };
+      patientList.appendChild(patientBtn);
+    });
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn';
+    cancelBtn.style.background = '#94a3b8';
+    cancelBtn.textContent = 'Cancelar';
+    cancelBtn.onclick = () => backdrop.remove();
+    
+    modal.appendChild(title);
+    modal.appendChild(patientList);
+    modal.appendChild(cancelBtn);
+    
+    backdrop.appendChild(modal);
+    root.appendChild(backdrop);
+  } else {
+    openConsultationForm(patientId, consultationId);
+  }
+};
+
+// Função para ver detalhes da consulta no gerenciador
+window.openConsultationDetailManager = (patientId, consultationId) => {
+  openConsultationDetail(patientId, consultationId);
+};
+
+// Função para excluir consulta do gerenciador
+window.deleteConsultationManager = async (consultationId) => {
+  if (!confirm('Tem certeza que deseja excluir esta consulta? Esta ação não pode ser desfeita.')) {
+    return;
+  }
+  
+  try {
+    await ensureAuth();
+    
+    const { error } = await supabase
+      .from('consultations')
+      .delete()
+      .eq('id', consultationId);
+    
+    if (error) throw error;
+    
+    // Recarregar a lista atual
+    const container = document.getElementById('consultationManagerTabsContent');
+    if (container) {
+      const activeTab = container.parentElement.querySelector('.tab.active');
+      if (activeTab.textContent.includes('Todas')) {
+        renderConsultationManagerList(container);
+      } else {
+        renderConsultationCalendar(container);
+      }
+    }
+    
+    // Mostrar mensagem de sucesso
+    alert('Consulta excluída com sucesso!');
+    
+  } catch (error) {
+    console.error('Erro ao excluir consulta:', error);
+    alert('Erro ao excluir consulta: ' + error.message);
+  }
 };
