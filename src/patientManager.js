@@ -1,7 +1,8 @@
 // src/patientManager.js - VERSÃO COMPLETA E CORRIGIDA
 import { state, loadPatientsFromDB, loadPatientDiets, loadPatientConsultations, calcularIdade } from './state.js';
 import { renderMeals, renderSummary } from './ui.js';
-import { openPatientDiets, openPatientConsultations } from './patients.js';
+import { openPatientDiets } from './patientDiets.js';
+import { openPatientConsultations } from './consultations.js';
 import supabase from './supabase.js';
 import { authManager } from './auth.js';
 
