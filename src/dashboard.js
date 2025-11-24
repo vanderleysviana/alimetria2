@@ -1,8 +1,8 @@
-// src/dashboard.js - DASHBOARD COMPLETO E ATUALIZADO
-import { state, loadRecentConsultations, loadStats, selectPatient } from './state.js';
+// src/dashboard.js - DASHBOARD CORRIGIDO PARA ABRIR PERFIL
+import { state, loadRecentConsultations, loadStats } from './state.js';
 import { openPatientManager } from './patientManager.js';
 import { openPatientConsultations, openConsultationManager } from './consultations.js';
-import { showDietBuilder } from './dietBuilder.js';
+import { openPatientProfile } from './patientProfile.js';
 
 export function showDashboard() {
   const app = document.getElementById('app');
@@ -84,11 +84,6 @@ export function showDashboard() {
               <div class="action-icon">👥</div>
               <div class="action-title">Gerenciar Pacientes</div>
               <div class="action-description">Cadastrar, editar e visualizar pacientes</div>
-            </div>
-            <div class="quick-action-card" id="dietBuilderCard" style="opacity:0.5;cursor:not-allowed">
-              <div class="action-icon">🍽️</div>
-              <div class="action-title">Montar Dieta</div>
-              <div class="action-description">Selecione um paciente para começar</div>
             </div>
             <div class="quick-action-card" onclick="openConsultationManager()">
               <div class="action-icon">🩺</div>
@@ -204,8 +199,8 @@ function renderConsultations(consultations) {
         <div class="consultation-time">${new Date(consult.data_horario).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • ${consult.tipo || 'Consulta'}</div>
       </div>
       <div class="consultation-actions">
-        <button class="btn btn-sm btn-outline" onclick="openPatientConsultations('${consult.patient_id}')">
-          Detalhes
+        <button class="btn btn-sm btn-outline" onclick="openPatientProfile('${consult.patient_id}')">
+          👤 Perfil
         </button>
       </div>
     </div>
@@ -235,9 +230,12 @@ function renderRecentPatients() {
   }
 
   const patientsHtml = patients.map(patient => `
-    <div class="patient-card" onclick="selectPatientFromDashboard('${patient.id}')">
+    <div class="patient-card" onclick="openPatientProfile('${patient.id}')">
       <div class="patient-avatar">
-        ${patient.genero === 'Feminino' ? '👩' : patient.genero === 'Masculino' ? '👨' : '👤'}
+        ${patient.foto_url 
+          ? `<img src="${patient.foto_url}" alt="${patient.nome}" />`
+          : `<div class="avatar-placeholder">${patient.nome.charAt(0)}</div>`
+        }
       </div>
       <div class="patient-info">
         <div class="patient-name">${patient.nome}</div>
@@ -256,16 +254,7 @@ function renderRecentPatients() {
 }
 
 // Funções globais para o dashboard
-window.selectPatientFromDashboard = async (patientId) => {
-  const success = selectPatient(patientId);
-  if (success) {
-    // Fechar modal se estiver aberto
-    document.querySelector('.modal-backdrop')?.remove();
-    // Mostrar interface de montagem de dieta
-    showDietBuilder();
-  }
-};
-
+window.openPatientProfile = openPatientProfile;
 window.openConsultationManager = openConsultationManager;
 
 window.openReports = () => {
