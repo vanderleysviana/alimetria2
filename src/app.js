@@ -45,8 +45,25 @@ class App {
   }
 
   setupAuthListener() {
-    // Listener para mudanças de autenticação
-    // (implementação similar à anterior, mas simplificada)
+    // Listener para mudanças de autenticação do Supabase
+    window.supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Mudança de estado de autenticação:', event);
+      
+      if (event === 'SIGNED_IN' && session) {
+        authManager.isAuthenticated = true;
+        authManager.currentUser = session.user;
+        
+        if (!this.isInitialized) {
+          await initializeApp();
+          this.showMainApp();
+        }
+      } else if (event === 'SIGNED_OUT') {
+        authManager.isAuthenticated = false;
+        authManager.currentUser = null;
+        this.isInitialized = false;
+        authManager.showLogin();
+      }
+    });
   }
 
   showErrorScreen(error) {
@@ -66,7 +83,7 @@ class App {
   }
 }
 
-// Inicializar aplicação
+// Inicializar aplicação quando DOM estiver pronto
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const app = new App();
