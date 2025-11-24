@@ -1,8 +1,9 @@
-// src/app.js - VERSÃO REORGANIZADA E SIMPLIFICADA
+// src/app.js - VERSÃO CORRIGIDA COM SUPABASE IMPORT
 import { authManager } from './auth.js';
 import { state, initializeApp } from './state.js';
 import { showDashboard } from './dashboard.js';
 import { showDietBuilder } from './dietBuilder.js';
+import supabase from './supabase.js'; // Importação adicionada
 
 class App {
   constructor() {
@@ -46,7 +47,7 @@ class App {
 
   setupAuthListener() {
     // Listener para mudanças de autenticação do Supabase
-    window.supabase.auth.onAuthStateChange(async (event, session) => {
+    supabase.auth.onAuthStateChange(async (event, session) => { // Corrigido: usar supabase importado
       console.log('🔄 Mudança de estado de autenticação:', event);
       
       if (event === 'SIGNED_IN' && session) {
@@ -94,6 +95,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     
   } catch (error) {
     console.error('💥 Erro fatal:', error);
+    const app = document.getElementById('app');
+    if (app) {
+      app.innerHTML = `
+        <div class="error-screen">
+          <div class="error-content">
+            <div class="error-icon">💥</div>
+            <h1>Erro Fatal</h1>
+            <p>${error.message || 'Ocorreu um erro crítico ao iniciar a aplicação.'}</p>
+            <button onclick="location.reload()" class="btn btn-primary">
+              🔄 Tentar Novamente
+            </button>
+          </div>
+        </div>
+      `;
+    }
   }
 });
 
