@@ -164,18 +164,22 @@ function renderConsultationList(patientId, container) {
           <button class="btn" style="background: #f59e0b;" onclick="window.openConsultationForm('${patientId}', '${consulta.id}')">
             ✏️ Editar
           </button>
-          <button class="btn btn-sm" style="background: #f59e0b;" onclick="openAnamnesisForm('${consultation.id}', '${patientId}', ${consultation.anamneses ? JSON.stringify(consultation.anamneses).replace(/"/g, '&quot;') : 'null'})">
-            📝 Anamnese
-          </button>
-          <button class="btn btn-sm" style="background: #10b981;" onclick="openAnthropometryForm('${consultation.id}', '${patientId}', ${consultation.anthropometry ? JSON.stringify(consultation.anthropometry).replace(/"/g, '&quot;') : 'null'})">
-            📏 Antropometria
-          </button>
           <button class="btn btn-danger" onclick="window.deleteConsultation('${patientId}', '${consulta.id}')">
             🗑️ Excluir
           </button>
         </div>
       </div>
       ${consulta.observacoes ? `<p style="color: #6b7280; margin: 0; font-size: 14px;">${consulta.observacoes}</p>` : ''}
+      
+      <!-- Botões para Antropometria e Anamnese -->
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button class="btn btn-sm" style="background: #f59e0b;" onclick="openAnamnesisForm('${consulta.id}', '${patientId}', ${consulta.anamneses ? JSON.stringify(consulta.anamneses).replace(/"/g, '&quot;') : 'null'})">
+          📝 ${consulta.anamneses ? 'Editar' : 'Adicionar'} Anamnese
+        </button>
+        <button class="btn btn-sm" style="background: #10b981;" onclick="openAnthropometryForm('${consulta.id}', '${patientId}', ${consulta.anthropometry ? JSON.stringify(consulta.anthropometry).replace(/"/g, '&quot;') : 'null'})">
+          📏 ${consulta.anthropometry ? 'Editar' : 'Adicionar'} Antropometria
+        </button>
+      </div>
     `;
     
     list.appendChild(card);
@@ -359,6 +363,30 @@ window.openConsultationForm = async (patientId, consultationId = null) => {
     field.appendChild(input);
     form.appendChild(field);
   });
+
+  // Seção de módulos da consulta
+  const modulesSection = document.createElement('div');
+  modulesSection.style.background = '#f0f9ff';
+  modulesSection.style.padding = '16px';
+  modulesSection.style.borderRadius = '8px';
+  modulesSection.style.border = '1px solid #bae6fd';
+
+  modulesSection.innerHTML = `
+    <h4 style="margin: 0 0 12px 0; color: #0369a1;">🧩 Módulos da Consulta</h4>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button type="button" class="btn" style="background: #f59e0b;" onclick="openAnamnesisForm('${consultation?.id || 'new'}', '${patientId}', ${consultation?.anamneses ? JSON.stringify(consultation.anamneses).replace(/"/g, '&quot;') : 'null'})">
+        📝 ${consultation?.anamneses ? 'Editar' : 'Adicionar'} Anamnese
+      </button>
+      <button type="button" class="btn" style="background: #10b981;" onclick="openAnthropometryForm('${consultation?.id || 'new'}', '${patientId}', ${consultation?.anthropometry ? JSON.stringify(consultation.anthropometry).replace(/"/g, '&quot;') : 'null'})">
+        📏 ${consultation?.anthropometry ? 'Editar' : 'Adicionar'} Antropometria
+      </button>
+    </div>
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #64748b;">
+      ⚠️ Salve a consulta primeiro antes de preencher os módulos
+    </p>
+  `;
+
+  form.appendChild(modulesSection);
   
   modal.appendChild(form);
   
@@ -417,7 +445,7 @@ window.openConsultationForm = async (patientId, consultationId = null) => {
       }
       
       if (result.error) throw result.error;
-      
+
       // Recarregar consultas
       await loadPatientConsultations(patientId);
       backdrop.remove();
@@ -543,12 +571,19 @@ window.openConsultationDetail = (patientId, consultationId) => {
     anamneseSection.style.padding = '20px';
     anamneseSection.style.borderRadius = '8px';
     anamneseSection.innerHTML = `
-      <h4 style="margin: 0 0 16px 0; color: #0369a1;">📝 Anamnese</h4>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h4 style="margin: 0; color: #0369a1;">📝 Anamnese</h4>
+        <button class="btn btn-sm" style="background: #f59e0b;" onclick="openAnamnesisForm('${consultation.id}', '${patientId}', ${JSON.stringify(consultation.anamneses).replace(/"/g, '&quot;')})">
+          ✏️ Editar
+        </button>
+      </div>
       <div style="display: grid; gap: 12px;">
         ${consultation.anamneses.historico_clinico ? `<div><strong>Histórico Clínico:</strong><br>${consultation.anamneses.historico_clinico}</div>` : ''}
         ${consultation.anamneses.historico_familiar ? `<div><strong>Histórico Familiar:</strong><br>${consultation.anamneses.historico_familiar}</div>` : ''}
         ${consultation.anamneses.alergias ? `<div><strong>Alergias:</strong><br>${consultation.anamneses.alergias}</div>` : ''}
         ${consultation.anamneses.restricoes ? `<div><strong>Restrições:</strong><br>${consultation.anamneses.restricoes}</div>` : ''}
+        ${consultation.anamneses.rotina ? `<div><strong>Rotina:</strong><br>${consultation.anamneses.rotina}</div>` : ''}
+        ${consultation.anamneses.medicacoes ? `<div><strong>Medicações:</strong><br>${consultation.anamneses.medicacoes}</div>` : ''}
       </div>
     `;
     content.appendChild(anamneseSection);
@@ -561,16 +596,44 @@ window.openConsultationDetail = (patientId, consultationId) => {
     anthroSection.style.padding = '20px';
     anthroSection.style.borderRadius = '8px';
     anthroSection.innerHTML = `
-      <h4 style="margin: 0 0 16px 0; color: #92400e;">📏 Antropometria</h4>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h4 style="margin: 0; color: #92400e;">📏 Antropometria</h4>
+        <button class="btn btn-sm" style="background: #10b981;" onclick="openAnthropometryForm('${consultation.id}', '${patientId}', ${JSON.stringify(consultation.anthropometry).replace(/"/g, '&quot;')})">
+          ✏️ Editar
+        </button>
+      </div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
         ${consultation.anthropometry.peso ? `<div><strong>Peso:</strong><br>${consultation.anthropometry.peso} kg</div>` : ''}
         ${consultation.anthropometry.altura ? `<div><strong>Altura:</strong><br>${consultation.anthropometry.altura} m</div>` : ''}
         ${consultation.anthropometry.imc ? `<div><strong>IMC:</strong><br>${consultation.anthropometry.imc}</div>` : ''}
         ${consultation.anthropometry.circ_cintura ? `<div><strong>Circ. Cintura:</strong><br>${consultation.anthropometry.circ_cintura} cm</div>` : ''}
+        ${consultation.anthropometry.circ_quadril ? `<div><strong>Circ. Quadril:</strong><br>${consultation.anthropometry.circ_quadril} cm</div>` : ''}
+        ${consultation.anthropometry.gordura_corporal ? `<div><strong>% Gordura:</strong><br>${consultation.anthropometry.gordura_corporal}%</div>` : ''}
+        ${consultation.anthropometry.massa_magra ? `<div><strong>Massa Magra:</strong><br>${consultation.anthropometry.massa_magra} kg</div>` : ''}
       </div>
     `;
     content.appendChild(anthroSection);
   }
+  
+  // Botões de ação
+  const actionSection = document.createElement('div');
+  actionSection.style.display = 'flex';
+  actionSection.style.gap = '12px';
+  actionSection.style.justifyContent = 'center';
+  actionSection.style.padding = '16px';
+  actionSection.style.background = '#f8fafc';
+  actionSection.style.borderRadius = '8px';
+  
+  actionSection.innerHTML = `
+    <button class="btn btn-primary" onclick="openAnamnesisForm('${consultation.id}', '${patientId}', ${consultation.anamneses ? JSON.stringify(consultation.anamneses).replace(/"/g, '&quot;') : 'null'})">
+      📝 ${consultation.anamneses ? 'Editar' : 'Adicionar'} Anamnese
+    </button>
+    <button class="btn" style="background: #10b981;" onclick="openAnthropometryForm('${consultation.id}', '${patientId}', ${consultation.anthropometry ? JSON.stringify(consultation.anthropometry).replace(/"/g, '&quot;') : 'null'})">
+      📏 ${consultation.anthropometry ? 'Editar' : 'Adicionar'} Antropometria
+    </button>
+  `;
+  
+  content.appendChild(actionSection);
   
   modal.appendChild(content);
   backdrop.appendChild(modal);
@@ -609,29 +672,6 @@ export function openConsultationManager() {
   header.appendChild(title);
   header.appendChild(newBtn);
   modal.appendChild(header);
-
-  const modulesSection = document.createElement('div');
-  modulesSection.style.background = '#f0f9ff';
-  modulesSection.style.padding = '16px';
-  modulesSection.style.borderRadius = '8px';
-  modulesSection.style.border = '1px solid #bae6fd';
-  
-  modulesSection.innerHTML = `
-    <h4 style="margin: 0 0 12px 0; color: #0369a1;">🧩 Módulos da Consulta</h4>
-    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-      <button type="button" class="btn" style="background: #f59e0b;" onclick="openAnamnesisForm('${consultation?.id || 'new'}', '${patientId}', ${consultation?.anamneses ? JSON.stringify(consultation.anamneses).replace(/"/g, '&quot;') : 'null'})">
-        📝 Anamnese
-      </button>
-      <button type="button" class="btn" style="background: #10b981;" onclick="openAnthropometryForm('${consultation?.id || 'new'}', '${patientId}', ${consultation?.anthropometry ? JSON.stringify(consultation.anthropometry).replace(/"/g, '&quot;') : 'null'})">
-        📏 Antropometria
-      </button>
-    </div>
-    <p style="margin: 8px 0 0 0; font-size: 12px; color: #64748b;">
-      ⚠️ Salve a consulta primeiro antes de preencher os módulos
-    </p>
-  `;
-  
-  form.appendChild(modulesSection);
 
   // Container principal com abas
   const tabsContainer = document.createElement('div');
