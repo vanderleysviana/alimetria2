@@ -1,4 +1,4 @@
-// src/consultations.js - SISTEMA COMPLETO DE CONSULTAS CORRIGIDO
+// src/consultations.js - SISTEMA COMPLETO DE CONSULTAS
 import { state, loadPatientConsultations } from './state.js';
 import supabase, { ensureAuth } from './supabase.js';
 
@@ -29,9 +29,8 @@ export function openPatientConsultations(patientId) {
   title.style.margin = '0';
   
   const newBtn = document.createElement('button');
-  newBtn.className = 'btn';
+  newBtn.className = 'btn btn-primary';
   newBtn.innerHTML = '➕ Nova Consulta';
-  newBtn.style.background = '#8B5CF6';
   newBtn.onclick = () => openConsultationForm(patientId);
   
   header.appendChild(title);
@@ -43,18 +42,16 @@ export function openPatientConsultations(patientId) {
   tabsContainer.style.marginBottom = '20px';
   
   const tabs = document.createElement('div');
-  tabs.style.display = 'flex';
-  tabs.style.gap = '8px';
-  tabs.style.borderBottom = '2px solid #e5e7eb';
+  tabs.className = 'tabs';
   
-  const tabLista = document.createElement('button');
+  const tabLista = document.createElement('div');
+  tabLista.className = 'tab active';
   tabLista.textContent = '📋 Lista de Consultas';
-  tabLista.className = 'tab-btn active';
   tabLista.onclick = () => switchConsultationTab('lista', tabsContent, patientId);
   
-  const tabStats = document.createElement('button');
+  const tabStats = document.createElement('div');
+  tabStats.className = 'tab';
   tabStats.textContent = '📊 Estatísticas';
-  tabStats.className = 'tab-btn';
   tabStats.onclick = () => switchConsultationTab('stats', tabsContent, patientId);
   
   tabs.appendChild(tabLista);
@@ -72,11 +69,7 @@ export function openPatientConsultations(patientId) {
   switchConsultationTab('lista', tabsContent, patientId);
 
   const footer = document.createElement('div');
-  footer.style.display = 'flex';
-  footer.style.justifyContent = 'flex-end';
-  footer.style.marginTop = '20px';
-  footer.style.paddingTop = '16px';
-  footer.style.borderTop = '1px solid #e5e7eb';
+  footer.className = 'modal-footer';
   
   const close = document.createElement('button');
   close.className = 'btn';
@@ -93,7 +86,8 @@ export function openPatientConsultations(patientId) {
 
 function switchConsultationTab(tab, container, patientId) {
   // Atualizar botões de aba
-  const tabButtons = container.parentElement.querySelectorAll('.tab-btn');
+  const tabs = container.parentElement.querySelector('.tabs');
+  const tabButtons = tabs.querySelectorAll('.tab');
   tabButtons.forEach(btn => btn.classList.remove('active'));
   
   // Encontrar e ativar o botão correto
@@ -119,11 +113,11 @@ function renderConsultationList(patientId, container) {
   
   if (consultas.length === 0) {
     container.innerHTML = `
-      <div style="text-align: center; padding: 60px 20px; color: #6b7280;">
+      <div class="empty-state">
         <div style="font-size: 64px; margin-bottom: 16px;">🩺</div>
         <h3 style="color: #374151; margin-bottom: 8px;">Nenhuma consulta encontrada</h3>
         <p style="margin-bottom: 24px;">Comece criando a primeira consulta para este paciente.</p>
-        <button class="btn" style="background: #8B5CF6;" onclick="window.openConsultationForm('${patientId}')">
+        <button class="btn btn-primary" onclick="window.openConsultationForm('${patientId}')">
           ➕ Criar Primeira Consulta
         </button>
       </div>
@@ -164,13 +158,13 @@ function renderConsultationList(patientId, container) {
           </div>
         </div>
         <div style="display: flex; gap: 8px;">
-          <button class="btn" style="background: #3b82f6;" onclick="window.openConsultationDetail('${patientId}', '${consulta.id}')">
+          <button class="btn btn-primary" onclick="window.openConsultationDetail('${patientId}', '${consulta.id}')">
             👁️ Detalhes
           </button>
           <button class="btn" style="background: #f59e0b;" onclick="window.openConsultationForm('${patientId}', '${consulta.id}')">
             ✏️ Editar
           </button>
-          <button class="btn" style="background: #ef4444;" onclick="window.deleteConsultation('${patientId}', '${consulta.id}')">
+          <button class="btn btn-danger" onclick="window.deleteConsultation('${patientId}', '${consulta.id}')">
             🗑️ Excluir
           </button>
         </div>
@@ -209,17 +203,26 @@ function renderConsultationStats(patientId, container) {
   
   container.innerHTML = `
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px;">
-      <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
-        <h4 style="margin: 0 0 12px 0; color: #374151;">📈 Total de Consultas</h4>
-        <div style="font-size: 32px; font-weight: bold; color: #8B5CF6;">${consultas.length}</div>
+      <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-info">
+          <div class="stat-value">${consultas.length}</div>
+          <div class="stat-label">Total de Consultas</div>
+        </div>
       </div>
-      <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
-        <h4 style="margin: 0 0 12px 0; color: #374151;">📅 Primeira Consulta</h4>
-        <div style="font-size: 16px; color: #1f2937;">${new Date(consultas[consultas.length-1]?.data_horario).toLocaleDateString('pt-BR')}</div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-info">
+          <div class="stat-value">${new Date(consultas[consultas.length-1]?.data_horario).toLocaleDateString('pt-BR')}</div>
+          <div class="stat-label">Primeira Consulta</div>
+        </div>
       </div>
-      <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
-        <h4 style="margin: 0 0 12px 0; color: #374151;">🔄 Última Consulta</h4>
-        <div style="font-size: 16px; color: #1f2937;">${new Date(consultas[0]?.data_horario).toLocaleDateString('pt-BR')}</div>
+      <div class="stat-card">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-info">
+          <div class="stat-value">${new Date(consultas[0]?.data_horario).toLocaleDateString('pt-BR')}</div>
+          <div class="stat-label">Última Consulta</div>
+        </div>
       </div>
     </div>
     
@@ -370,8 +373,7 @@ window.openConsultationForm = async (patientId, consultationId = null) => {
   
   const save = document.createElement('button');
   save.type = 'button';
-  save.className = 'btn';
-  save.style.background = '#10b981';
+  save.className = 'btn btn-success';
   save.textContent = consultation ? 'Atualizar' : 'Salvar';
   
   save.onclick = async () => {
