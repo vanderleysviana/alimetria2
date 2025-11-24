@@ -477,9 +477,3 @@ async function deletePatient(patientId) {
     alert('Erro ao excluir paciente: ' + error.message);
   }
 }
-
-// Adicionar botão de excluir na renderização da lista
-export function addDeleteButtonToPatientList() {
-  // Esta função pode ser usada para adicionar botão de excluir
-  // em cada item da lista de pacientes se necessário
-}
