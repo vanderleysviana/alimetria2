@@ -26,13 +26,12 @@ export function openPatientDiets(patientId) {
   header.style.alignItems = 'center';
   
   const title = document.createElement('h3');
-  title.textContent = `Dietas de ${patient.name}`;
+  title.textContent = `Dietas de ${patient.nome}`;
   title.style.color = '#1565C0';
   
   const newDietBtn = document.createElement('button');
-  newDietBtn.className = 'btn';
+  newDietBtn.className = 'btn btn-primary';
   newDietBtn.textContent = '➕ Nova Dieta';
-  newDietBtn.style.background = '#1E88E5';
   newDietBtn.onclick = async () => {
     await createNewDietForPatient(patientId);
     openPatientDiets(patientId);
@@ -63,7 +62,7 @@ export function openPatientDiets(patientId) {
     a.style.gap = '8px';
     
     const loadBtn = document.createElement('button');
-    loadBtn.className = 'btn';
+    loadBtn.className = 'btn btn-primary';
     loadBtn.textContent = 'Carregar';
     loadBtn.onclick = () => {
       loadDietToSession(patientId, d.id);
@@ -79,8 +78,7 @@ export function openPatientDiets(patientId) {
     };
     
     const del = document.createElement('button');
-    del.className = 'btn';
-    del.style.background = '#ef4444';
+    del.className = 'btn btn-danger';
     del.textContent = 'Excluir';
     del.onclick = async () => {
       if (confirm('Excluir dieta?')) {
@@ -101,9 +99,7 @@ export function openPatientDiets(patientId) {
   modal.appendChild(list);
 
   const footer = document.createElement('div');
-  footer.style.display = 'flex';
-  footer.style.justifyContent = 'flex-end';
-  footer.style.marginTop = '12px';
+  footer.className = 'modal-footer';
   
   const close = document.createElement('button');
   close.className = 'btn';
@@ -143,28 +139,13 @@ async function deleteDiet(dietId) {
   }
 }
 
-export async function saveEditingDiet() {
-  if (!state.editingDiet) {
-    alert('Selecione um paciente e uma dieta para começar.');
+export async function saveCurrentDiet() {
+  if (!state.currentPatient) {
+    alert('Selecione um paciente para salvar a dieta.');
     return;
   }
   
-  const { patientId, dietId } = state.editingDiet;
-  const patient = state.patients[patientId];
-  
-  if (!patient) {
-    alert('Paciente não encontrado.');
-    state.editingDiet = null;
-    return;
-  }
-  
-  const dietIndex = (patient.dietas || []).findIndex(d => d.id === dietId);
-  if (dietIndex === -1) {
-    alert('Dieta não encontrada.');
-    state.editingDiet = null;
-    return;
-  }
-
+  const patientId = state.currentPatient.id;
   const hasAny = Object.keys(state.meals).some(m => (state.meals[m] || []).length > 0);
   if (!hasAny) {
     alert('A dieta está vazia. Adicione pelo menos 1 alimento.');
@@ -180,9 +161,13 @@ export async function saveEditingDiet() {
     }
   }
 
-  const backupPatient = JSON.parse(JSON.stringify(patient));
-  const diet = (patient.dietas || [])[dietIndex];
-  const saveBtn = document.getElementById('saveDietFloating');
+  const name = prompt('Nome para a nova dieta (obrigatório):');
+  if (!name || !name.trim()) {
+    alert('Nome da dieta obrigatório');
+    return;
+  }
+
+  const saveBtn = document.getElementById('saveDietBtn');
   
   if (saveBtn) {
     saveBtn.disabled = true;
@@ -192,72 +177,56 @@ export async function saveEditingDiet() {
   try {
     await ensureAuth();
     
+    const { data: diet, error } = await supabase
+      .from('diets')
+      .insert([{
+        patient_id: patientId,
+        data: new Date().toISOString().split('T')[0],
+        objetivo: name.trim()
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
     const dbMeals = convertAppMealsToDbFormat(state.meals);
     
     for (const dbMeal of dbMeals) {
-      let mealId;
-      const { data: existingMeal } = await supabase
+      const { data: meal, error: mealError } = await supabase
         .from('meals')
-        .select('id')
-        .eq('diet_id', dietId)
-        .eq('nome', dbMeal.nome)
+        .insert([{ diet_id: diet.id, nome: dbMeal.nome }])
+        .select()
         .single();
       
-      if (existingMeal) {
-        mealId = existingMeal.id;
-        await supabase
-          .from('meal_items')
-          .delete()
-          .eq('meal_id', mealId);
-      } else {
-        const { data: newMeal, error } = await supabase
-          .from('meals')
-          .insert([{ diet_id: dietId, nome: dbMeal.nome }])
-          .select()
-          .single();
-        
-        if (error) throw error;
-        mealId = newMeal.id;
-      }
+      if (mealError) throw mealError;
       
       if (dbMeal.meal_items.length > 0) {
         const mealItems = dbMeal.meal_items.map(item => ({
-          meal_id: mealId,
+          meal_id: meal.id,
           food_id: item.food_id,
           quantidade_gramas: item.quantidade_gramas
         }));
         
-        const { error } = await supabase
+        const { error: itemsError } = await supabase
           .from('meal_items')
           .insert(mealItems);
         
-        if (error) throw error;
+        if (itemsError) throw itemsError;
       }
     }
+    
+    await loadPatientDiets(patientId);
     
     state.unsavedChanges = false;
     alert('Dieta salva com sucesso.');
     
   } catch (error) {
-    state.patients[patientId] = backupPatient;
-    state.unsavedChanges = true;
-    
-    console.error('ERR_SAVE_001', error);
-    
-    if (error && error.message && error.message.includes('Network')) {
-      if (confirm('Falha de conexão. Verifique sua internet e tente novamente. Deseja tentar novamente?')) {
-        saveEditingDiet();
-      }
-    } else {
-      const code = 'ERR_SAVE_001';
-      if (confirm(`Erro ao salvar. Código: ${code}. Deseja tentar novamente?`)) {
-        saveEditingDiet();
-      }
-    }
+    console.error('❌ Erro ao salvar dieta:', error);
+    alert('Erro ao salvar dieta no banco de dados');
   } finally {
     if (saveBtn) {
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Salvar Dieta';
+      saveBtn.textContent = '💾 Salvar Dieta';
     }
     
     renderSummary();
@@ -331,12 +300,12 @@ export function loadDietToSession(patientId, dietId) {
     state.meals[m] = (diet.meals[m] || []).map(i => ({ ...i }));
   });
   
-  state.patient = { ...patient };
+  state.currentPatient = { ...patient };
   const disp = document.getElementById('patientDisplay');
   
-  if (disp) disp.textContent = `${patient.name} — ${diet.name}`;
+  if (disp) disp.textContent = `${patient.nome} — ${diet.name}`;
   
-  state.editingDiet = { patientId, dietId, dietName: diet.name };
+  state.currentDiet = { patientId, dietId, dietName: diet.name };
   renderMeals();
   renderSummary();
   
@@ -402,7 +371,7 @@ export async function saveCurrentSessionAsDiet(patientId) {
     
     await loadPatientDiets(patientId);
     
-    alert(`Dieta "${name}" salva no paciente ${patient.name}.`);
+    alert(`Dieta "${name}" salva no paciente ${patient.nome}.`);
     
   } catch (error) {
     console.error('❌ Erro ao salvar dieta:', error);
