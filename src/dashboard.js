@@ -1,6 +1,7 @@
 // src/dashboard.js - DASHBOARD CORRIGIDO
 import { state, loadRecentConsultations, loadStats, selectPatient } from './state.js';
-import { openPatientManager, openPatientConsultations } from './patientManager.js';
+import { openPatientManager } from './patientManager.js';
+import { openPatientConsultations } from './consultations.js';
 import { showDietBuilder } from './dietBuilder.js';
 
 export function showDashboard() {
