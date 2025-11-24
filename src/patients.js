@@ -19,4 +19,4 @@ export {
   saveCurrentDiet 
 } from './patientDiets.js';
 
-export { openPatientConsultations } from './consultations.js';
+// Não reexportar openPatientConsultations para evitar conflitos
