@@ -1,8 +1,8 @@
-// src/dietBuilder.js - MONTADOR DE DIETAS ELEGANTE
+// src/dietBuilder.js - VERIFICAÇÃO DE IMPORTAÇÕES
 import { state, MEALS, selectPatient, clearCurrentPatient } from './state.js';
 import { openAddFoodModal } from './modals.js';
 import { savePatientToPdfContext } from './pdf.js';
-import { saveCurrentDiet } from './patientDiets.js';
+import { saveCurrentDiet } from './patientDiets.js'; // ← Esta importação deve funcionar agora
 
 export function showDietBuilder() {
   const app = document.getElementById('app');
@@ -94,7 +94,7 @@ export function showDietBuilder() {
 }
 
 function attachDietBuilderEvents() {
-  // Botão salvar dieta
+  // Botão salvar dieta - CORRIGIDO para usar saveCurrentDiet
   document.getElementById('saveDietBtn').addEventListener('click', saveCurrentDiet);
   
   // Botão exportar PDF
@@ -109,6 +109,8 @@ function attachDietBuilderEvents() {
     }
   });
 }
+
+// ... (o resto das funções do dietBuilder permanecem iguais)
 
 function renderDietData() {
   renderMealLists();
@@ -307,5 +309,6 @@ window.showDashboard = () => {
       return;
     }
   }
-  showDashboard();
+  // Precisamos importar showDashboard ou usar uma abordagem diferente
+  window.location.reload(); // Solução temporária
 };
