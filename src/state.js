@@ -24,6 +24,7 @@ export const state = {
   // UI State
   unsavedChanges: false,
   loading: false,
+  appReady: false, // Nova flag para indicar que app está pronto
   
   // Dados de trabalho atual
   meals: {}
@@ -224,6 +225,7 @@ export async function initializeApp() {
       loadStats()
     ]);
     
+    state.appReady = true; // Marcar app como pronto
     console.log('✅ Aplicação inicializada com sucesso');
     
   } catch (error) {
@@ -343,4 +345,9 @@ export async function loadPatientConsultations(patientId) {
   } catch (error) {
     console.error('❌ Erro ao carregar consultas:', error);
   }
+}
+
+// Verificar se aplicação está pronta
+export function isAppReady() {
+  return state.appReady && !state.loading;
 }
