@@ -164,6 +164,12 @@ function renderConsultationList(patientId, container) {
           <button class="btn" style="background: #f59e0b;" onclick="window.openConsultationForm('${patientId}', '${consulta.id}')">
             ✏️ Editar
           </button>
+          <button class="btn btn-sm" style="background: #f59e0b;" onclick="openAnamnesisForm('${consultation.id}', '${patientId}', ${consultation.anamneses ? JSON.stringify(consultation.anamneses).replace(/"/g, '&quot;') : 'null'})">
+            📝 Anamnese
+          </button>
+          <button class="btn btn-sm" style="background: #10b981;" onclick="openAnthropometryForm('${consultation.id}', '${patientId}', ${consultation.anthropometry ? JSON.stringify(consultation.anthropometry).replace(/"/g, '&quot;') : 'null'})">
+            📏 Antropometria
+          </button>
           <button class="btn btn-danger" onclick="window.deleteConsultation('${patientId}', '${consulta.id}')">
             🗑️ Excluir
           </button>
@@ -603,6 +609,29 @@ export function openConsultationManager() {
   header.appendChild(title);
   header.appendChild(newBtn);
   modal.appendChild(header);
+
+  const modulesSection = document.createElement('div');
+  modulesSection.style.background = '#f0f9ff';
+  modulesSection.style.padding = '16px';
+  modulesSection.style.borderRadius = '8px';
+  modulesSection.style.border = '1px solid #bae6fd';
+  
+  modulesSection.innerHTML = `
+    <h4 style="margin: 0 0 12px 0; color: #0369a1;">🧩 Módulos da Consulta</h4>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button type="button" class="btn" style="background: #f59e0b;" onclick="openAnamnesisForm('${consultation?.id || 'new'}', '${patientId}', ${consultation?.anamneses ? JSON.stringify(consultation.anamneses).replace(/"/g, '&quot;') : 'null'})">
+        📝 Anamnese
+      </button>
+      <button type="button" class="btn" style="background: #10b981;" onclick="openAnthropometryForm('${consultation?.id || 'new'}', '${patientId}', ${consultation?.anthropometry ? JSON.stringify(consultation.anthropometry).replace(/"/g, '&quot;') : 'null'})">
+        📏 Antropometria
+      </button>
+    </div>
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #64748b;">
+      ⚠️ Salve a consulta primeiro antes de preencher os módulos
+    </p>
+  `;
+  
+  form.appendChild(modulesSection);
 
   // Container principal com abas
   const tabsContainer = document.createElement('div');
