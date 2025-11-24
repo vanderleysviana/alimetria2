@@ -8,7 +8,7 @@ import { authManager } from './auth.js';
 export function initPatientUI() {
   const disp = document.getElementById('patientDisplay');
   if (!disp) return;
-  const current = state.patient && state.patient.nome ? state.patient : null;
+  const current = state.currentPatient;
   disp.textContent = current ? `${current.nome}` : '— nenhum paciente selecionado —';
 }
 
@@ -46,9 +46,8 @@ export async function openPatientManager() {
     title.style.margin = '0';
     
     const newBtn = document.createElement('button');
-    newBtn.className = 'btn';
+    newBtn.className = 'btn btn-primary';
     newBtn.innerHTML = '➕ Novo Paciente';
-    newBtn.style.background = '#1E88E5';
     newBtn.onclick = () => openEditPatientForm();
     
     titleWrap.appendChild(title);
@@ -79,6 +78,7 @@ export async function openPatientManager() {
     list.style.border = '1px solid #e5e7eb';
     list.style.borderRadius = '8px';
     list.style.padding = '8px';
+    list.className = 'patient-list';
     modal.appendChild(list);
 
     // Renderizar lista inicial
@@ -90,11 +90,7 @@ export async function openPatientManager() {
     });
 
     const footer = document.createElement('div');
-    footer.style.display = 'flex';
-    footer.style.justifyContent = 'flex-end';
-    footer.style.marginTop = '16px';
-    footer.style.paddingTop = '16px';
-    footer.style.borderTop = '1px solid #e5e7eb';
+    footer.className = 'modal-footer';
     
     const close = document.createElement('button');
     close.className = 'btn';
@@ -142,8 +138,8 @@ export function renderPatientList(filter, container) {
   
   filtered.forEach(p => {
     const idade = p.data_nascimento ? calcularIdade(p.data_nascimento) : null;
-    const dietCount = (p.dietas && p.dietas.length) ? p.dietas.length : 0;
-    const consultaCount = (p.consultas && p.consultas.length) ? p.consultas.length : 0;
+    const dietCount = p.dietCount || 0;
+    const consultaCount = p.consultationCount || 0;
     
     const row = document.createElement('div');
     row.className = 'patient-row';
@@ -198,8 +194,7 @@ export function renderPatientList(filter, container) {
     actions.style.minWidth = '200px';
     
     const dietBtn = document.createElement('button');
-    dietBtn.className = 'btn';
-    dietBtn.style.background = '#2196F3';
+    dietBtn.className = 'btn btn-primary';
     dietBtn.style.width = '100%';
     dietBtn.textContent = '📄 Dietas';
     dietBtn.onclick = async () => {
@@ -227,8 +222,7 @@ export function renderPatientList(filter, container) {
     };
     
     const selectBtn = document.createElement('button');
-    selectBtn.className = 'btn';
-    selectBtn.style.background = '#10b981';
+    selectBtn.className = 'btn btn-success';
     selectBtn.style.width = '100%';
     selectBtn.textContent = '✅ Selecionar';
     selectBtn.onclick = () => {
@@ -342,12 +336,7 @@ export async function openEditPatientForm(existing = null) {
   ].forEach(field => modal.appendChild(field));
 
   const actions = document.createElement('div');
-  actions.style.display = 'flex';
-  actions.style.justifyContent = 'flex-end';
-  actions.style.gap = '12px';
-  actions.style.marginTop = '24px';
-  actions.style.paddingTop = '16px';
-  actions.style.borderTop = '1px solid #e5e7eb';
+  actions.className = 'modal-footer';
   
   const cancel = document.createElement('button');
   cancel.className = 'btn';
@@ -356,8 +345,7 @@ export async function openEditPatientForm(existing = null) {
   cancel.onclick = () => backdrop.remove();
   
   const save = document.createElement('button');
-  save.className = 'btn';
-  save.style.background = '#10b981';
+  save.className = 'btn btn-success';
   save.textContent = existing ? 'Atualizar' : 'Salvar';
   
   save.onclick = async () => {
@@ -437,7 +425,7 @@ export function selectPatient(id) {
   const p = state.patients[id];
   if (!p) return;
   
-  state.patient = { ...p };
+  state.currentPatient = { ...p };
   initPatientUI();
   renderMeals();
   renderSummary();
