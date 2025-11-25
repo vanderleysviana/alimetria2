@@ -1,4 +1,4 @@
-// src/ui.js - VERSÃO COMPLETA COM VERIFICAÇÃO DE PRONTIDÃO
+// src/ui.js - VERSÃO COMPLETA COM VERIFICAÇÃO DE PRONTIDÃO E MAIS NUTRIENTES
 import { state, MEALS, formatNumber, calcScaled, isAppReady } from './state.js';
 import { openAddFoodModal } from './modals.js';
 import { savePatientToPdfContext } from './pdf.js';
@@ -141,15 +141,58 @@ export function renderMealList(mealName){
     const row = document.createElement('div'); 
     row.className='food-item';
     const left = document.createElement('div'); 
-    left.innerHTML = `<div style="font-weight:600;color:var(--dark)">${food.name}</div><div style="font-size:12px;color:#334155">${item.qty} g</div>`;
+    left.innerHTML = `
+      <div style="font-weight:600;color:var(--dark)">${food.name}</div>
+      <div style="font-size:12px;color:#334155">${item.qty} g</div>
+    `;
+    
     const right = document.createElement('div'); 
     right.style.display='flex'; 
     right.style.gap='8px'; 
     right.style.alignItems='center';
+    right.style.flexDirection = 'column';
+    right.style.alignItems = 'flex-end';
+    
+    // Linha principal de nutrientes
     const nutrDiv = document.createElement('div'); 
     nutrDiv.style.fontSize='12px'; 
     nutrDiv.style.color='#0f172a';
-    nutrDiv.innerHTML = `Kcal ${formatNumber(calcScaled(food.calorias, item.qty),0)} • P ${formatNumber(calcScaled(food.proteina, item.qty))}g • C ${formatNumber(calcScaled(food.carboidrato, item.qty))}g • L ${formatNumber(calcScaled(food.lipidio, item.qty))}g`;
+    nutrDiv.style.textAlign = 'right';
+    nutrDiv.innerHTML = `
+      <strong>Kcal ${formatNumber(calcScaled(food.calorias, item.qty),0)}</strong> • 
+      P ${formatNumber(calcScaled(food.proteina, item.qty))}g • 
+      C ${formatNumber(calcScaled(food.carboidrato, item.qty))}g • 
+      L ${formatNumber(calcScaled(food.lipidio, item.qty))}g
+    `;
+    
+    // Linha secundária com mais nutrientes
+    const extraNutrDiv = document.createElement('div');
+    extraNutrDiv.style.fontSize='11px';
+    extraNutrDiv.style.color='#64748b';
+    extraNutrDiv.style.textAlign = 'right';
+    
+    const extraNutrients = [];
+    if (food.fibra || food.fibra_alimentar) {
+      extraNutrients.push(`Fib ${formatNumber(calcScaled(food.fibra || food.fibra_alimentar, item.qty))}g`);
+    }
+    if (food.colesterol && calcScaled(food.colesterol, item.qty) > 0) {
+      extraNutrients.push(`Col ${formatNumber(calcScaled(food.colesterol, item.qty))}mg`);
+    }
+    if (food.sodio && calcScaled(food.sodio, item.qty) > 0) {
+      extraNutrients.push(`Na ${formatNumber(calcScaled(food.sodio, item.qty))}mg`);
+    }
+    if (food.potassio && calcScaled(food.potassio, item.qty) > 0) {
+      extraNutrients.push(`K ${formatNumber(calcScaled(food.potassio, item.qty))}mg`);
+    }
+    if (food.calcio && calcScaled(food.calcio, item.qty) > 0) {
+      extraNutrients.push(`Ca ${formatNumber(calcScaled(food.calcio, item.qty))}mg`);
+    }
+    if (food.ferro && calcScaled(food.ferro, item.qty) > 0) {
+      extraNutrients.push(`Fe ${formatNumber(calcScaled(food.ferro, item.qty))}mg`);
+    }
+    
+    extraNutrDiv.textContent = extraNutrients.join(' • ');
+    
     const del = document.createElement('button'); 
     del.className='btn btn-danger btn-sm'; 
     del.textContent='Remover';
@@ -159,8 +202,13 @@ export function renderMealList(mealName){
       renderMealList(mealName); 
       renderSummary(); 
     };
-    right.appendChild(nutrDiv); 
+    
+    right.appendChild(nutrDiv);
+    if (extraNutrients.length > 0) {
+      right.appendChild(extraNutrDiv);
+    }
     right.appendChild(del);
+    
     row.appendChild(left); 
     row.appendChild(right);
     list.appendChild(row);
@@ -170,13 +218,33 @@ export function renderMealList(mealName){
   if (totalsEl) {
     totalsEl.innerHTML=''; 
     const sum = aggregateMeal(mealName);
-    totalsEl.innerHTML = `<div style="font-weight:600;color:#063970">Totais: Kcal ${formatNumber(sum.calorias,0)} • P ${formatNumber(sum.proteina)}g • C ${formatNumber(sum.carboidrato)}g • L ${formatNumber(sum.lipidio)}g • Fib ${formatNumber(sum.fibra)}g</div>`;
+    totalsEl.innerHTML = `
+      <div style="font-weight:600;color:#063970">
+        Totais: Kcal ${formatNumber(sum.calorias,0)} • 
+        P ${formatNumber(sum.proteina)}g • 
+        C ${formatNumber(sum.carboidrato)}g • 
+        L ${formatNumber(sum.lipidio)}g • 
+        Fib ${formatNumber(sum.fibra)}g
+      </div>
+    `;
   }
 }
 
 export function aggregateMeal(mealName){
   const foods = state.meals[mealName] || [];
-  const total = {calorias:0,proteina:0,carboidrato:0,lipidio:0,fibra:0};
+  const total = {
+    calorias:0,
+    proteina:0,
+    carboidrato:0,
+    lipidio:0,
+    fibra:0,
+    colesterol:0,
+    sodio:0,
+    potassio:0,
+    calcio:0,
+    ferro:0
+  };
+  
   foods.forEach(item=>{
     // USAR foodData SE DISPONÍVEL, CASO CONTRÁRIO BUSCAR NO state.taco
     const f = item.foodData || state.taco[item.id] || {};
@@ -184,9 +252,15 @@ export function aggregateMeal(mealName){
     total.proteina += calcScaled(f.proteina||0, item.qty);
     total.carboidrato += calcScaled(f.carboidrato||0, item.qty);
     total.lipidio += calcScaled(f.lipidio||0, item.qty);
-    total.fibra += calcScaled(f.fibra||0, item.qty || 0);
+    total.fibra += calcScaled(f.fibra||f.fibra_alimentar||0, item.qty || 0);
+    total.colesterol += calcScaled(f.colesterol||0, item.qty);
+    total.sodio += calcScaled(f.sodio||0, item.qty);
+    total.potassio += calcScaled(f.potassio||0, item.qty);
+    total.calcio += calcScaled(f.calcio||0, item.qty);
+    total.ferro += calcScaled(f.ferro||0, item.qty);
+    
     Object.keys(f).forEach(k=>{
-      if(!['id','name','calorias','proteina','carboidrato','lipidio','fibra'].includes(k)){
+      if(!['id','name','calorias','proteina','carboidrato','lipidio','fibra','fibra_alimentar','colesterol','sodio','potassio','calcio','ferro'].includes(k)){
         if(typeof f[k] === 'number'){
           total[k] = (total[k] || 0) + calcScaled(f[k], item.qty);
         }
@@ -197,7 +271,19 @@ export function aggregateMeal(mealName){
 }
 
 export function aggregateAll(){
-  const total = {calorias:0,proteina:0,carboidrato:0,lipidio:0,fibra:0};
+  const total = {
+    calorias:0,
+    proteina:0,
+    carboidrato:0,
+    lipidio:0,
+    fibra:0,
+    colesterol:0,
+    sodio:0,
+    potassio:0,
+    calcio:0,
+    ferro:0
+  };
+  
   MEALS.forEach(m=>{
     const t = aggregateMeal(m);
     Object.keys(t).forEach(k=> total[k] = (total[k]||0) + t[k]);
@@ -229,6 +315,9 @@ export function renderSummary(){
     <div style="min-width:120px"><strong>Carboidratos</strong><div style="font-size:16px;color:#063970">${formatNumber(sum.carboidrato)} g</div></div>
     <div style="min-width:120px"><strong>Lipídios</strong><div style="font-size:16px;color:#063970">${formatNumber(sum.lipidio)} g</div></div>
     <div style="min-width:120px"><strong>Fibras</strong><div style="font-size:16px;color:#063970">${formatNumber(sum.fibra)} g</div></div>
+    ${sum.colesterol > 0 ? `<div style="min-width:120px"><strong>Colesterol</strong><div style="font-size:14px;color:#475569">${formatNumber(sum.colesterol)} mg</div></div>` : ''}
+    ${sum.sodio > 0 ? `<div style="min-width:120px"><strong>Sódio</strong><div style="font-size:14px;color:#475569">${formatNumber(sum.sodio)} mg</div></div>` : ''}
+    ${sum.potassio > 0 ? `<div style="min-width:120px"><strong>Potássio</strong><div style="font-size:14px;color:#475569">${formatNumber(sum.potassio)} mg</div></div>` : ''}
   `;
 
   // floating Save Diet button (visible only when editingDiet is set)
@@ -279,6 +368,9 @@ export function renderSummary(){
   if(sum.carboidrato > 350) addAlert('Excesso de carboidratos.');
   if(sum.calorias > 3000) addAlert('Calorias acima do recomendado.');
   if(sum.fibra < 25) addAlert('Fibras insuficientes.');
+  if(sum.sodio > 2300) addAlert('Sódio acima do recomendado.');
+  if(sum.colesterol > 300) addAlert('Colesterol acima do recomendado.');
+  
   MEALS.forEach(m=>{
     if((state.meals[m] || []).length===0) addAlert(`Refeição vazia: ${m}`);
   });
