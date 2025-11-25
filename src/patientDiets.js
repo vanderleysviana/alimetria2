@@ -1,4 +1,4 @@
-// src/patientDiets.js - VERSÃO COMPLETA E CORRIGIDA
+// src/patientDiets.js - VERSÃO COMPLETA CORRIGIDA
 import { state, MEALS, convertAppMealsToDbFormat, loadPatientDiets } from './state.js';
 import { renderMeals, renderSummary } from './ui.js';
 import supabase, { ensureAuth } from './supabase.js';
@@ -46,6 +46,9 @@ export function openPatientDiets(patientId) {
   list.style.marginTop = '12px';
   
   (patient.dietas || []).forEach(d => {
+    const totalItems = Object.values(d.meals || {}).reduce((acc, meal) => acc + meal.length, 0);
+    const totalMeals = Object.keys(d.meals || {}).filter(m => d.meals[m].length > 0).length;
+    
     const r = document.createElement('div');
     r.style.display = 'flex';
     r.style.justifyContent = 'space-between';
@@ -54,7 +57,14 @@ export function openPatientDiets(patientId) {
     r.style.borderBottom = '1px solid rgba(0,0,0,0.04)';
     
     const left = document.createElement('div');
-    left.innerHTML = `<div style="font-weight:600">${d.name}</div><div style="font-size:12px;color:#334155">Data: ${d.createdAt} • Refeições: ${Object.keys(d.meals || {}).length}</div>`;
+    left.innerHTML = `
+      <div style="font-weight:600">${d.name}</div>
+      <div style="font-size:12px;color:#334155">
+        Data: ${d.createdAt} • 
+        Refeições: ${totalMeals} • 
+        Itens: ${totalItems}
+      </div>
+    `;
     
     const a = document.createElement('div');
     a.style.display = 'flex';
@@ -330,8 +340,36 @@ export function loadDietToSession(patientId, dietId) {
   const diet = (patient.dietas || []).find(d => d.id === dietId);
   if (!diet) return;
   
-  Object.keys(diet.meals).forEach(m => {
-    state.meals[m] = (diet.meals[m] || []).map(i => ({ ...i }));
+  // Limpar refeições atuais
+  MEALS.forEach(meal => state.meals[meal] = []);
+  
+  // Carregar refeições da dieta
+  Object.keys(diet.meals).forEach(mealName => {
+    state.meals[mealName] = (diet.meals[mealName] || []).map(item => ({
+      id: item.id,
+      qty: item.qty,
+      // Garantir que os dados do alimento estão disponíveis
+      foodData: item.foodData
+    }));
+    
+    // Adicionar alimentos ao state.taco se não existirem
+    diet.meals[mealName].forEach(item => {
+      if (item.foodData && !state.taco[item.foodData.id]) {
+        state.taco[item.foodData.id] = {
+          id: item.foodData.id,
+          name: item.foodData.nome,
+          qtd_padrao: item.foodData.qtd_padrao || 100,
+          calorias: item.foodData.calorias || 0,
+          proteina: item.foodData.proteina || 0,
+          carboidrato: item.foodData.carboidrato || 0,
+          lipidio: item.foodData.lipidio || 0,
+          fibra: item.foodData.fibra_alimentar || 0,
+          colesterol: item.foodData.colesterol || 0,
+          sodio: item.foodData.sodio || 0,
+          potassio: item.foodData.potassio || 0
+        };
+      }
+    });
   });
   
   state.currentPatient = { ...patient };
