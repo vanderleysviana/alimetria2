@@ -109,7 +109,7 @@ export function renderMeals(){
 
 export function renderMealList(mealName){
   const list = document.getElementById(`list-${mealName}`);
-  if (!list) return; // Verificar se o elemento existe
+  if (!list) return;
   
   list.innerHTML=''; 
   const foods = state.meals[mealName] || [];
@@ -128,7 +128,16 @@ export function renderMealList(mealName){
   }
   
   foods.forEach(item=>{
-    const food = state.taco[item.id] || { name: 'Desconhecido', calorias:0, proteina:0, carboidrato:0, lipidio:0, fibra:0 };
+    // USAR foodData SE DISPONÍVEL, CASO CONTRÁRIO BUSCAR NO state.taco
+    const food = item.foodData || state.taco[item.id] || { 
+      name: 'Desconhecido', 
+      calorias: 0, 
+      proteina: 0, 
+      carboidrato: 0, 
+      lipidio: 0, 
+      fibra: 0 
+    };
+    
     const row = document.createElement('div'); 
     row.className='food-item';
     const left = document.createElement('div'); 
@@ -169,7 +178,8 @@ export function aggregateMeal(mealName){
   const foods = state.meals[mealName] || [];
   const total = {calorias:0,proteina:0,carboidrato:0,lipidio:0,fibra:0};
   foods.forEach(item=>{
-    const f = state.taco[item.id] || {};
+    // USAR foodData SE DISPONÍVEL, CASO CONTRÁRIO BUSCAR NO state.taco
+    const f = item.foodData || state.taco[item.id] || {};
     total.calorias += calcScaled(f.calorias||0, item.qty);
     total.proteina += calcScaled(f.proteina||0, item.qty);
     total.carboidrato += calcScaled(f.carboidrato||0, item.qty);
