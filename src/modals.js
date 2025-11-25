@@ -31,6 +31,7 @@ export function openAddFoodModal(mealName){
   const select = document.createElement('select');
   select.style.padding='8px'; 
   select.style.borderRadius='8px';
+  select.style.width = '100%';
   
   const tacoList = Object.values(state.taco).sort((a,b)=>a.name.localeCompare(b.name));
   const blankOpt = document.createElement('option'); 
@@ -58,13 +59,31 @@ export function openAddFoodModal(mealName){
   qtyInput.type='number'; 
   qtyInput.value=100; 
   qtyInput.min=1;
+  qtyInput.style.width = '100%';
+  qtyInput.style.padding = '8px';
+  qtyInput.style.borderRadius = '8px';
+  qtyInput.style.border = '1px solid #d1d5db';
   
   fieldQty.appendChild(qtyLabel); 
   fieldQty.appendChild(qtyInput);
+
+  // Preview de nutrientes
+  const previewDiv = document.createElement('div');
+  previewDiv.id = 'nutrientPreview';
+  previewDiv.style.background = '#f8fafc';
+  previewDiv.style.padding = '12px';
+  previewDiv.style.borderRadius = '8px';
+  previewDiv.style.marginTop = '12px';
+  previewDiv.style.display = 'none';
+  previewDiv.style.fontSize = '12px';
+  previewDiv.innerHTML = '<strong>Informações nutricionais (por 100g):</strong><div id="previewContent"></div>';
+  
+  fieldSel.appendChild(previewDiv);
   
   const notFoundBtn = document.createElement('button'); 
   notFoundBtn.className='btn btn-primary'; 
   notFoundBtn.textContent='Alimento não está na TACO? Cadastrar';
+  notFoundBtn.style.marginTop = '12px';
   
   notFoundBtn.onclick = (e)=>{
     e.preventDefault();
@@ -76,6 +95,7 @@ export function openAddFoodModal(mealName){
   actions.style.display='flex'; 
   actions.style.justifyContent='flex-end'; 
   actions.style.gap='8px';
+  actions.style.marginTop = '16px';
   
   const cancel = document.createElement('button'); 
   cancel.className='btn'; 
@@ -96,12 +116,21 @@ export function openAddFoodModal(mealName){
       return;
     }
     
-    // prevent duplicate items: merge quantities if id exists
-    const existing = state.meals[mealName].find(x=>x.id===id);
+    // Verificar se o alimento existe na TACO
+    const food = state.taco[id];
+    if (!food) {
+      alert('Alimento não encontrado na base de dados.');
+      return;
+    }
     
-    if(existing){
+    console.log('Adicionando alimento:', food.name, 'Quantidade:', qty);
+    
+    // prevent duplicate items: merge quantities if id exists
+    const existingIndex = state.meals[mealName].findIndex(x=>x.id===id);
+    
+    if(existingIndex !== -1){
       if(!confirm('Alimento já existe nesta refeição. Deseja somar as quantidades?')) return;
-      existing.qty = Number(existing.qty || 0) + qty;
+      state.meals[mealName][existingIndex].qty = Number(state.meals[mealName][existingIndex].qty || 0) + qty;
     }else{
       state.meals[mealName].push({id, qty});
     }
@@ -123,6 +152,35 @@ export function openAddFoodModal(mealName){
   
   backdrop.appendChild(modal); 
   modalRoot.appendChild(backdrop);
+  
+  // Evento para mostrar preview de nutrientes
+  select.addEventListener('change', function() {
+    const foodId = this.value;
+    const previewContent = document.getElementById('previewContent');
+    const previewDiv = document.getElementById('nutrientPreview');
+    
+    if (foodId && state.taco[foodId]) {
+      const food = state.taco[foodId];
+      previewDiv.style.display = 'block';
+      
+      previewContent.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 8px;">
+          <div><strong>Calorias:</strong> ${food.calorias || 0} kcal</div>
+          <div><strong>Proteínas:</strong> ${food.proteina || 0}g</div>
+          <div><strong>Lipídios:</strong> ${food.lipidio || 0}g</div>
+          <div><strong>Carboidratos:</strong> ${food.carboidrato || 0}g</div>
+          <div><strong>Fibras:</strong> ${food.fibra || food.fibra_alimentar || 0}g</div>
+          <div><strong>Colesterol:</strong> ${food.colesterol || 0}mg</div>
+          <div><strong>Sódio:</strong> ${food.sodio || 0}mg</div>
+          <div><strong>Potássio:</strong> ${food.potassio || 0}mg</div>
+          ${food.calcio ? `<div><strong>Cálcio:</strong> ${food.calcio}mg</div>` : ''}
+          ${food.ferro ? `<div><strong>Ferro:</strong> ${food.ferro}mg</div>` : ''}
+        </div>
+      `;
+    } else {
+      previewDiv.style.display = 'none';
+    }
+  });
   
   select.addEventListener('focus', ()=> select.size = 6);
   select.addEventListener('blur', ()=> setTimeout(()=>select.size=0,200));
@@ -159,6 +217,11 @@ export function openRegisterFoodModal(mealName, defaultQty=100){
     
     inp.id=id; 
     inp.value = defaultVal;
+    inp.style.width = '100%';
+    inp.style.padding = '8px';
+    inp.style.borderRadius = '8px';
+    inp.style.border = '1px solid #d1d5db';
+    
     f.appendChild(l); 
     f.appendChild(inp);
     
@@ -172,15 +235,19 @@ export function openRegisterFoodModal(mealName, defaultQty=100){
   const fCarb = makeField('Carboidratos (g/100g)','nf_carb','number',0);
   const fLip = makeField('Lipídios (g/100g)','nf_lip','number',0);
   const fFib = makeField('Fibras (g/100g)','nf_fib','number',0);
+  const fCol = makeField('Colesterol (mg/100g)','nf_col','number',0);
+  const fSod = makeField('Sódio (mg/100g)','nf_sod','number',0);
+  const fPot = makeField('Potássio (mg/100g)','nf_pot','number',0);
   const fOther = makeField('Outros nutrientes (json em chave:valor para números)','nf_other','text','{}');
   
   modal.appendChild(title);
-  [fName,fQty,fKcal,fProt,fCarb,fLip,fFib,fOther].forEach(f=>modal.appendChild(f.el));
+  [fName,fQty,fKcal,fProt,fCarb,fLip,fFib,fCol,fSod,fPot,fOther].forEach(f=>modal.appendChild(f.el));
   
   const actions = document.createElement('div'); 
   actions.style.display='flex';
   actions.style.justifyContent='flex-end';
   actions.style.gap='8px';
+  actions.style.marginTop = '16px';
   
   const cancel = document.createElement('button'); 
   cancel.className='btn'; 
@@ -209,7 +276,10 @@ export function openRegisterFoodModal(mealName, defaultQty=100){
       proteina: Number(fProt.input.value)||0,
       carboidrato: Number(fCarb.input.value)||0,
       lipidio: Number(fLip.input.value)||0,
-      fibra: Number(fFib.input.value)||0
+      fibra: Number(fFib.input.value)||0,
+      colesterol: Number(fCol.input.value)||0,
+      sodio: Number(fSod.input.value)||0,
+      potassio: Number(fPot.input.value)||0
     };
     
     try{
