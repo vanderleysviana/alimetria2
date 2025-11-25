@@ -1,4 +1,4 @@
-// src/state.js - VERSÃO COMPLETA COM TODAS AS EXPORTAÇÕES
+// src/state.js - VERSÃO COMPLETA COM TODAS AS CORREÇÕES
 import supabase from './supabase.js';
 
 export const MEALS = [
@@ -24,7 +24,7 @@ export const state = {
   // UI State
   unsavedChanges: false,
   loading: false,
-  appReady: false, // Nova flag para indicar que app está pronto
+  appReady: false,
   
   // Dados de trabalho atual
   meals: {}
@@ -54,7 +54,7 @@ export function calcularIdade(dataNascimento) {
   return idade;
 }
 
-// Carregar pacientes do Supabase
+// Carregar pacientes do Supabase COM CONTADORES
 export async function loadPatientsFromDB() {
   try {
     const { data: patients, error } = await supabase
@@ -65,17 +65,31 @@ export async function loadPatientsFromDB() {
     if (error) throw error;
     
     state.patients = {};
-    patients.forEach(p => {
-      state.patients[p.id] = {
-        ...p,
-        idade: calcularIdade(p.data_nascimento),
-        dietCount: 0,
-        consultationCount: 0,
+    
+    // Carregar contadores para cada paciente
+    for (const patient of patients) {
+      // Contar dietas
+      const { count: dietCount, error: dietError } = await supabase
+        .from('diets')
+        .select('*', { count: 'exact', head: true })
+        .eq('patient_id', patient.id);
+      
+      // Contar consultas
+      const { count: consultationCount, error: consultationError } = await supabase
+        .from('consultations')
+        .select('*', { count: 'exact', head: true })
+        .eq('patient_id', patient.id);
+      
+      state.patients[patient.id] = {
+        ...patient,
+        idade: calcularIdade(patient.data_nascimento),
+        dietCount: dietError ? 0 : (dietCount || 0),
+        consultationCount: consultationError ? 0 : (consultationCount || 0),
         lastConsultation: null
       };
-    });
+    }
     
-    console.log(`✅ ${patients.length} pacientes carregados`);
+    console.log(`✅ ${patients.length} pacientes carregados com contadores`);
     return patients.length;
     
   } catch (error) {
@@ -225,7 +239,7 @@ export async function initializeApp() {
       loadStats()
     ]);
     
-    state.appReady = true; // Marcar app como pronto
+    state.appReady = true;
     console.log('✅ Aplicação inicializada com sucesso');
     
   } catch (error) {
@@ -235,7 +249,7 @@ export async function initializeApp() {
   }
 }
 
-// Converter formato da app para estrutura do banco - FUNÇÃO ADICIONADA
+// Converter formato da app para estrutura do banco
 export function convertAppMealsToDbFormat(appMeals) {
   const dbMeals = [];
   
@@ -254,7 +268,7 @@ export function convertAppMealsToDbFormat(appMeals) {
   return dbMeals;
 }
 
-// Carregar dietas de um paciente
+// Carregar dietas de um paciente COM TODOS OS DADOS DOS ALIMENTOS
 export async function loadPatientDiets(patientId) {
   try {
     const { data: diets, error } = await supabase
@@ -280,8 +294,10 @@ export async function loadPatientDiets(patientId) {
     if (patient) {
       patient.dietas = diets.map(diet => ({
         id: diet.id,
-        name: `Dieta ${new Date(diet.data).toLocaleDateString()}`,
+        name: diet.objetivo || `Dieta ${new Date(diet.data).toLocaleDateString('pt-BR')}`,
         objetivo: diet.objetivo,
+        observacoes: diet.observacoes,
+        data: diet.data,
         createdAt: diet.data,
         meals: convertDbMealsToAppFormat(diet.meals)
       }));
@@ -291,11 +307,10 @@ export async function loadPatientDiets(patientId) {
     
   } catch (error) {
     console.error('❌ Erro ao carregar dietas:', error);
-    // loadMockDiets(patientId);
   }
 }
 
-// Converter estrutura do banco para formato da app
+// Converter estrutura do banco para formato da app INCLUINDO TODOS OS DADOS DOS ALIMENTOS
 function convertDbMealsToAppFormat(dbMeals) {
   const appMeals = {};
   MEALS.forEach(m => appMeals[m] = []);
@@ -306,7 +321,29 @@ function convertDbMealsToAppFormat(dbMeals) {
       appMeals[mealName] = meal.meal_items.map(item => ({
         id: item.foods.id,
         qty: item.quantidade_gramas,
-        foodData: item.foods
+        // Incluir TODOS os dados do alimento da tabela foods
+        foodData: {
+          id: item.foods.id,
+          nome: item.foods.nome,
+          taco_id: item.foods.taco_id,
+          qtd_padrao: item.foods.qtd_padrao,
+          calorias: item.foods.calorias,
+          proteina: item.foods.proteina,
+          lipidio: item.foods.lipidio,
+          colesterol: item.foods.colesterol,
+          carboidrato: item.foods.carboidrato,
+          fibra_alimentar: item.foods.fibra_alimentar,
+          calcio: item.foods.calcio,
+          ferro: item.foods.ferro,
+          sodio: item.foods.sodio,
+          potassio: item.foods.potassio,
+          re: item.foods.re,
+          tiamina: item.foods.tiamina,
+          riboflavina: item.foods.riboflavina,
+          piridoxina: item.foods.piridoxina,
+          niacina: item.foods.niacina,
+          vitamina_c: item.foods.vitamina_c
+        }
       }));
     }
   });
