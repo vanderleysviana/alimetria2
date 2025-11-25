@@ -1,4 +1,4 @@
-// src/pdf.js - VERSÃO CORRIGIDA COM JSPDF GLOBAL
+// src/pdf.js - VERSÃO CORRIGIDA COM JSPDF GLOBAL E LAYOUT PROFISSIONAL
 import { state, MEALS, formatNumber, calcScaled } from './state.js';
 import { aggregateAll } from './ui.js';
 
@@ -15,209 +15,298 @@ export function savePatientToPdfContext(){
   const doc = new jsPDF({unit:'pt',format:'a4'});
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const padding = 36;
+  const padding = 40;
   const contentWidth = pageWidth - padding*2;
 
-  // styling helpers
-  const blueTitle = '#1A73E8';
-  const darkText = 30;
-  const small = 10;
-  const normal = 12;
-  const titleSize = 16;
+  // Cores profissionais
+  const primaryColor = '#1565C0';
+  const secondaryColor = '#42A5F5';
+  const accentColor = '#FF9800';
+  const lightGray = '#f8f9fa';
+  const darkGray = '#495057';
+  const textColor = '#212529';
 
+  // Configurações de fonte
   doc.setFont('helvetica');
-
-  // Header - centered: Patient name, Diet name, Date
+  
+  // Header com gradiente
+  doc.setFillColor(21, 101, 192);
+  doc.rect(0, 0, pageWidth, 120, 'F');
+  
+  // Logo/Ícone
+  doc.setFontSize(24);
+  doc.setTextColor(255, 255, 255);
+  doc.text('🍎', padding, 50);
+  
+  // Título
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PLANO ALIMENTAR', padding + 40, 50);
+  
+  // Informações do paciente
   const patientName = state.currentPatient?.nome || '-';
-  const dateStr = new Date().toLocaleString();
+  const dateStr = new Date().toLocaleDateString('pt-BR');
+  
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Paciente: ${patientName}`, padding + 40, 70);
+  doc.text(`Data: ${dateStr}`, padding + 40, 85);
+  
+  // Linha divisória
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(1);
+  doc.line(padding, 100, pageWidth - padding, 100);
 
-  doc.setFontSize(titleSize);
-  doc.setTextColor(blueTitle);
-  doc.text(patientName, pageWidth/2, 48, {align: 'center'});
-  doc.setFontSize(normal);
-  doc.setTextColor(darkText);
-  doc.text(dateStr, pageWidth/2, 68, {align: 'center'});
-
-  // horizontal divider
-  const dividerY = 80;
-  doc.setDrawColor(79,143,247);
-  doc.setLineWidth(0.8);
-  doc.line(padding, dividerY, pageWidth - padding, dividerY);
-
-  // start content after header
-  let y = dividerY + 16;
-  const bottomLimit = pageHeight - 40;
+  let y = 140;
+  const bottomLimit = pageHeight - 60;
 
   // Helper: ensure there's enough space for a block; if not, add page and reset y
   function ensureSpace(heightNeeded){
     if(y + heightNeeded > bottomLimit){
       doc.addPage();
-      y = padding;
+      y = 80;
+      // Header secundário em páginas adicionais
+      doc.setFillColor(21, 101, 192);
+      doc.rect(0, 0, pageWidth, 60, 'F');
+      doc.setFontSize(12);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`Plano Alimentar - ${patientName}`, padding, 35);
+      doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageWidth - padding - 50, 35, {align: 'right'});
     }
   }
 
-  // Patient data section
-  const patientBlock = [];
-  patientBlock.push(`Nome: ${patientName}`);
-  if(state.currentPatient?.idade) patientBlock.push(`Idade: ${state.currentPatient.idade}`);
-  if(state.currentPatient?.observacoes) patientBlock.push(`Observações: ${state.currentPatient.observacoes}`);
-
-  const patientBlockHeight = patientBlock.length * 14 + 8;
-  ensureSpace(patientBlockHeight);
-  doc.setFontSize(normal);
-  doc.setTextColor(10,30,80);
-  doc.text('Dados do Paciente', padding, y);
-  y += 16;
-  doc.setFontSize(small);
-  doc.setTextColor(darkText);
-  patientBlock.forEach(line=>{
-    doc.text(line, padding, y);
-    y += 14;
-  });
-  y += 6;
-
-  // Summary nutritional totals
+  // Resumo nutricional destacado
   const total = aggregateAll();
-  const summaryLines = [];
-  summaryLines.push(`Calorias: ${formatNumber(total.calorias,0)} kcal`);
-  summaryLines.push(`Proteínas: ${formatNumber(total.proteina)} g`);
-  summaryLines.push(`Carboidratos: ${formatNumber(total.carboidrato)} g`);
-  summaryLines.push(`Lipídios: ${formatNumber(total.lipidio)} g`);
-  if(total.fibra !== undefined) summaryLines.push(`Fibras: ${formatNumber(total.fibra)} g`);
-
-  const summaryBlockHeight = summaryLines.length * 14 + 22;
-  ensureSpace(summaryBlockHeight);
-  doc.setFontSize(normal);
-  doc.setTextColor(10,30,80);
-  doc.text('Resumo Nutricional Total', padding, y);
-  y += 16;
-  doc.setFontSize(small);
-  doc.setTextColor(darkText);
-  summaryLines.forEach(line=>{
-    doc.text(line, padding, y);
-    y += 14;
+  const summaryHeight = 120;
+  ensureSpace(summaryHeight);
+  
+  // Card de resumo
+  doc.setFillColor(248, 249, 250);
+  doc.roundedRect(padding, y, contentWidth, summaryHeight, 5, 5, 'F');
+  doc.setDrawColor(222, 226, 230);
+  doc.roundedRect(padding, y, contentWidth, summaryHeight, 5, 5, 'S');
+  
+  doc.setFontSize(16);
+  doc.setTextColor(primaryColor);
+  doc.setFont('helvetica', 'bold');
+  doc.text('RESUMO NUTRICIONAL', padding + 20, y + 25);
+  
+  // Grid de nutrientes
+  const gridX = padding + 20;
+  const gridY = y + 50;
+  const colWidth = contentWidth / 4;
+  
+  const summaryItems = [
+    { label: 'Calorias', value: `${formatNumber(total.calorias,0)} kcal`, color: primaryColor },
+    { label: 'Proteínas', value: `${formatNumber(total.proteina)} g`, color: darkGray },
+    { label: 'Carboidratos', value: `${formatNumber(total.carboidrato)} g`, color: darkGray },
+    { label: 'Lipídios', value: `${formatNumber(total.lipidio)} g`, color: darkGray }
+  ];
+  
+  summaryItems.forEach((item, index) => {
+    const x = gridX + (index % 2) * (colWidth * 2);
+    const yPos = gridY + Math.floor(index / 2) * 25;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(darkGray);
+    doc.setFont('helvetica', 'normal');
+    doc.text(item.label, x, yPos);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(item.color);
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.value, x, yPos + 15);
   });
-  y += 8;
+  
+  // Nutrientes adicionais
+  if(total.fibra > 0 || total.colesterol > 0) {
+    const extraY = gridY + 50;
+    doc.setFontSize(10);
+    doc.setTextColor(darkGray);
+    doc.setFont('helvetica', 'normal');
+    
+    let extraText = '';
+    if(total.fibra > 0) extraText += `Fibras: ${formatNumber(total.fibra)} g`;
+    if(total.colesterol > 0) extraText += `${extraText ? ' • ' : ''}Colesterol: ${formatNumber(total.colesterol)} mg`;
+    if(total.sodio > 0) extraText += `${extraText ? ' • ' : ''}Sódio: ${formatNumber(total.sodio)} mg`;
+    
+    if(extraText) {
+      doc.text(extraText, gridX, extraY);
+    }
+  }
+  
+  y += summaryHeight + 30;
 
-  // Meals: render each meal
+  // Refeições
   MEALS.forEach(meal=>{
     const foods = state.meals[meal] || [];
 
     if (foods.length === 0) return;
 
-    const estimatedHeight = 16 + 18 + (foods.length * 20) + 18 + 14;
+    const estimatedHeight = 60 + (foods.length * 25) + 30;
+    ensureSpace(estimatedHeight);
 
-    if(y + estimatedHeight > bottomLimit){
-      doc.addPage();
-      y = padding;
-    }
-
-    // meal title
-    doc.setFontSize(normal);
-    doc.setTextColor(26,115,232);
-    doc.text(meal, padding, y);
-    y += 20;
-
-    // draw table header
-    doc.setFontSize(small);
-    doc.setTextColor(10,30,80);
+    // Título da refeição
+    doc.setFillColor(66, 165, 245);
+    doc.roundedRect(padding, y, contentWidth, 30, 3, 3, 'F');
     
-    const startX = padding;
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.text(meal.toUpperCase(), padding + 15, y + 18);
+    
+    y += 40;
+
+    // Cabeçalho da tabela
+    doc.setFillColor(233, 236, 239);
+    doc.rect(padding, y, contentWidth, 20, 'F');
+    
+    doc.setFontSize(9);
+    doc.setTextColor(darkGray);
+    doc.setFont('helvetica', 'bold');
+    
     const colWidths = {
-      name: contentWidth * 0.6,
-      qty: 60,
-      kcal: 70,
-      prot: 50,
-      carb: 50,
-      lip: 50
+      name: contentWidth * 0.4,
+      qty: contentWidth * 0.15,
+      kcal: contentWidth * 0.15,
+      nutrients: contentWidth * 0.3
     };
 
-    // Header background
-    doc.setFillColor(240,247,255);
-    doc.rect(startX, y, contentWidth, 18, 'F');
-    
-    let x = startX;
-    doc.text('Alimento', x + 6, y + 12);
+    let x = padding;
+    doc.text('ALIMENTO', x + 10, y + 13);
     x += colWidths.name;
-    doc.text('Qtd (g)', x + 6, y + 12);
+    doc.text('QTD (g)', x + 10, y + 13);
     x += colWidths.qty;
-    doc.text('Kcal', x + 6, y + 12);
+    doc.text('KCAL', x + 10, y + 13);
     x += colWidths.kcal;
-    doc.text('P', x + 6, y + 12);
-    x += colWidths.prot;
-    doc.text('C', x + 6, y + 12);
-    x += colWidths.carb;
-    doc.text('L', x + 6, y + 12);
+    doc.text('INFORMAÇÕES NUTRICIONAIS', x + 10, y + 13);
     
-    y += 22;
+    y += 25;
 
-    // draw rows
+    // Itens da refeição
     foods.forEach((item, idx)=>{
       const food = state.taco[item.id] || { name: 'Desconhecido', calorias:0, proteina:0, carboidrato:0, lipidio:0 };
       const kcal = formatNumber(calcScaled(food.calorias||0, item.qty),0);
-      const p = formatNumber(calcScaled(food.proteina||0, item.qty));
-      const c = formatNumber(calcScaled(food.carboidrato||0, item.qty));
-      const l = formatNumber(calcScaled(food.lipidio||0, item.qty));
-
-      // Row background alternating
+      
+      // Background alternado
       if(idx % 2 === 0){
-        doc.setFillColor(250, 252, 255);
-        doc.rect(startX, y, contentWidth, 16, 'F');
+        doc.setFillColor(252, 252, 252);
+      } else {
+        doc.setFillColor(248, 249, 250);
       }
+      doc.rect(padding, y, contentWidth, 20, 'F');
 
-      x = startX;
-      doc.setTextColor(darkText);
-      doc.setFontSize(10);
+      x = padding;
+      doc.setFontSize(8);
+      doc.setTextColor(textColor);
+      doc.setFont('helvetica', 'normal');
       
-      // Truncate long names
+      // Nome do alimento (truncado se necessário)
       let foodName = food.name;
-      if (foodName.length > 40) {
-        foodName = foodName.substring(0, 37) + '...';
+      if (foodName.length > 35) {
+        foodName = foodName.substring(0, 32) + '...';
       }
+      doc.text(foodName, x + 10, y + 12);
       
-      doc.text(foodName, x + 6, y + 10);
+      // Quantidade
       x += colWidths.name;
-      doc.text(String(item.qty), x + 6, y + 10);
+      doc.text(String(item.qty), x + 10, y + 12);
+      
+      // Calorias
       x += colWidths.qty;
-      doc.text(String(kcal), x + 6, y + 10);
+      doc.text(String(kcal), x + 10, y + 12);
+      
+      // Informações nutricionais
       x += colWidths.kcal;
-      doc.text(String(p), x + 6, y + 10);
-      x += colWidths.prot;
-      doc.text(String(c), x + 6, y + 10);
-      x += colWidths.carb;
-      doc.text(String(l), x + 6, y + 10);
+      const nutrients = [];
+      if (food.proteina) nutrients.push(`P: ${formatNumber(calcScaled(food.proteina, item.qty))}g`);
+      if (food.carboidrato) nutrients.push(`C: ${formatNumber(calcScaled(food.carboidrato, item.qty))}g`);
+      if (food.lipidio) nutrients.push(`L: ${formatNumber(calcScaled(food.lipidio, item.qty))}g`);
+      if (food.fibra || food.fibra_alimentar) nutrients.push(`Fib: ${formatNumber(calcScaled(food.fibra || food.fibra_alimentar, item.qty))}g`);
+      
+      doc.text(nutrients.join(' • '), x + 10, y + 12);
 
-      y += 16;
+      y += 20;
     });
 
-    y += 8;
+    // Totais da refeição
+    const mealTotal = foods.reduce((acc, item) => {
+      const food = state.taco[item.id] || {};
+      return {
+        calorias: acc.calorias + calcScaled(food.calorias||0, item.qty),
+        proteina: acc.proteina + calcScaled(food.proteina||0, item.qty),
+        carboidrato: acc.carboidrato + calcScaled(food.carboidrato||0, item.qty),
+        lipidio: acc.lipidio + calcScaled(food.lipidio||0, item.qty)
+      };
+    }, {calorias:0, proteina:0, carboidrato:0, lipidio:0});
+
+    y += 10;
+    doc.setFillColor(255, 243, 205);
+    doc.rect(padding, y, contentWidth, 20, 'F');
+    doc.setDrawColor(255, 193, 7);
+    doc.rect(padding, y, contentWidth, 20, 'S');
+    
+    doc.setFontSize(9);
+    doc.setTextColor(133, 100, 4);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TOTAL DA REFEIÇÃO: ${formatNumber(mealTotal.calorias,0)} kcal • Proteínas: ${formatNumber(mealTotal.proteina)}g • Carboidratos: ${formatNumber(mealTotal.carboidrato)}g • Lipídios: ${formatNumber(mealTotal.lipidio)}g`, 
+             padding + 10, y + 12);
+    
+    y += 35;
   });
 
-  // Final summary
-  const finalBlockLines = [
-    `Resumo Final`,
-    `Calorias: ${formatNumber(total.calorias,0)} kcal`,
-    `Proteínas: ${formatNumber(total.proteina)} g`,
-    `Carboidratos: ${formatNumber(total.carboidrato)} g`,
-    `Lipídios: ${formatNumber(total.lipidio)} g`,
+  // Resumo final profissional
+  const finalBlockHeight = 150;
+  ensureSpace(finalBlockHeight);
+  
+  doc.setFillColor(248, 249, 250);
+  doc.roundedRect(padding, y, contentWidth, finalBlockHeight, 5, 5, 'F');
+  doc.setDrawColor(222, 226, 230);
+  doc.roundedRect(padding, y, contentWidth, finalBlockHeight, 5, 5, 'S');
+  
+  doc.setFontSize(16);
+  doc.setTextColor(primaryColor);
+  doc.setFont('helvetica', 'bold');
+  doc.text('RESUMO GERAL DA DIETA', padding + 20, y + 25);
+  
+  // Grid do resumo final
+  const finalGridX = padding + 20;
+  const finalGridY = y + 50;
+  const finalColWidth = contentWidth / 2;
+  
+  const finalItems = [
+    { label: 'Energia Total', value: `${formatNumber(total.calorias,0)} kcal`, emoji: '⚡' },
+    { label: 'Proteínas', value: `${formatNumber(total.proteina)} g`, emoji: '🥩' },
+    { label: 'Carboidratos', value: `${formatNumber(total.carboidrato)} g`, emoji: '🍚' },
+    { label: 'Lipídios', value: `${formatNumber(total.lipidio)} g`, emoji: '🥑' },
+    { label: 'Fibras Alimentares', value: `${formatNumber(total.fibra)} g`, emoji: '🥦' },
+    { label: 'Valor Energético Total', value: `${formatNumber(total.calorias,0)} kcal`, emoji: '📊' }
   ];
   
-  if(total.fibra !== undefined) finalBlockLines.push(`Fibras: ${formatNumber(total.fibra)} g`);
-
-  const finalBlockHeight = finalBlockLines.length * 14 + 12;
-  ensureSpace(finalBlockHeight);
-
-  doc.setFontSize(normal);
-  doc.setTextColor(10,30,80);
-  doc.text('Resumo Geral da Dieta', padding, y);
-  y += 16;
-  doc.setFontSize(small);
-  doc.setTextColor(darkText);
-  finalBlockLines.forEach(line=>{
-    doc.text(line, padding, y);
-    y += 14;
+  finalItems.forEach((item, index) => {
+    const x = finalGridX + (index % 2) * finalColWidth;
+    const yPos = finalGridY + Math.floor(index / 2) * 25;
+    
+    doc.setFontSize(9);
+    doc.setTextColor(darkGray);
+    doc.setFont('helvetica', 'normal');
+    doc.text(item.emoji, x, yPos + 3);
+    doc.text(item.label, x + 20, yPos);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(primaryColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.value, x + 20, yPos + 12);
   });
 
+  // Rodapé
+  const footerY = pageHeight - 30;
+  doc.setFontSize(8);
+  doc.setTextColor(108, 117, 125);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Plano alimentar elaborado pelo Sistema Nutricional - Para acompanhamento profissional', 
+           pageWidth / 2, footerY, {align: 'center'});
+
   // save
-  doc.save(`dieta-${state.currentPatient?.nome || 'paciente'}.pdf`);
+  doc.save(`plano-alimentar-${state.currentPatient?.nome || 'paciente'}.pdf`);
 }
