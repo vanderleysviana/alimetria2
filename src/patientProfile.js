@@ -218,6 +218,8 @@ function renderPersonalDataTab(container, patientId) {
   `;
 }
 
+// No patientProfile.js, na função renderDietsTab, atualizar a exibição:
+
 function renderDietsTab(container, patientId) {
   const patient = state.patients[patientId];
   if (!patient) return;
@@ -262,31 +264,41 @@ function renderDietsTab(container, patientId) {
         </div>
         
         <div class="diet-cards">
-          ${diets.slice(0, 6).map(diet => `
-            <div class="diet-card">
-              <div class="diet-header">
-                <h4>${diet.name}</h4>
-                <span class="diet-date">${new Date(diet.createdAt).toLocaleDateString('pt-BR')}</span>
-              </div>
-              <div class="diet-info">
-                <div class="diet-objective">
-                  <strong>Objetivo:</strong> ${diet.objetivo || 'Não definido'}
+          ${diets.slice(0, 6).map(diet => {
+            const totalItems = Object.values(diet.meals || {}).reduce((acc, meal) => acc + meal.length, 0);
+            const totalMeals = Object.keys(diet.meals || {}).filter(m => diet.meals[m].length > 0).length;
+            
+            return `
+              <div class="diet-card">
+                <div class="diet-header">
+                  <h4>${diet.name}</h4>
+                  <span class="diet-date">${new Date(diet.createdAt).toLocaleDateString('pt-BR')}</span>
                 </div>
-                <div class="diet-stats">
-                  <span class="stat">Refeições: ${Object.keys(diet.meals || {}).filter(m => diet.meals[m].length > 0).length}</span>
-                  <span class="stat">Itens: ${Object.values(diet.meals || {}).reduce((acc, meal) => acc + meal.length, 0)}</span>
+                <div class="diet-info">
+                  <div class="diet-objective">
+                    <strong>Objetivo:</strong> ${diet.objetivo || 'Não definido'}
+                  </div>
+                  <div class="diet-stats">
+                    <span class="stat">Refeições: ${totalMeals}</span>
+                    <span class="stat">Itens: ${totalItems}</span>
+                  </div>
+                  ${diet.observacoes ? `
+                    <div class="diet-notes">
+                      <strong>Observações:</strong> ${diet.observacoes}
+                    </div>
+                  ` : ''}
+                </div>
+                <div class="diet-actions">
+                  <button class="btn btn-primary" onclick="loadDietToSession('${patientId}', '${diet.id}')">
+                    🔄 Carregar
+                  </button>
+                  <button class="btn btn-outline" onclick="openPatientDiets('${patientId}')">
+                    👁️ Detalhes
+                  </button>
                 </div>
               </div>
-              <div class="diet-actions">
-                <button class="btn btn-primary" onclick="loadDietToSession('${patientId}', '${diet.id}')">
-                  🔄 Carregar
-                </button>
-                <button class="btn btn-outline" onclick="openPatientDiets('${patientId}')">
-                  👁️ Detalhes
-                </button>
-              </div>
-            </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
         
         ${diets.length > 6 ? `
