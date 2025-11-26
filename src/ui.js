@@ -1,4 +1,4 @@
-// src/ui.js - VERSÃO COMPLETA COM VERIFICAÇÃO DE PRONTIDÃO E MAIS NUTRIENTES
+// src/ui.js - VERSÃO CORRIGIDA COM EXIBIÇÃO DE ALIMENTOS FUNCIONANDO
 import { state, MEALS, formatNumber, calcScaled, isAppReady } from './state.js';
 import { openAddFoodModal } from './modals.js';
 import { savePatientToPdfContext } from './pdf.js';
@@ -51,16 +51,17 @@ export function createMealCard(mealName){
 }
 
 export function renderMeals(){
+  console.log('🔄 Renderizando refeições...', state.meals);
+  
   // Verificar se a aplicação está pronta
   if (!isAppReady()) {
     console.log('⏳ Aplicação ainda não carregou, aguardando...');
-    setTimeout(renderMeals, 100); // Tentar novamente em 100ms
+    setTimeout(renderMeals, 100);
     return;
   }
 
   const container = document.getElementById('mealsContainer');
   
-  // Verificar se o container existe (aplicação principal carregada)
   if (!container) {
     console.log('⏳ Container de refeições não encontrado, aguardando...');
     return;
@@ -109,11 +110,16 @@ export function renderMeals(){
 
 export function renderMealList(mealName){
   const list = document.getElementById(`list-${mealName}`);
-  if (!list) return;
+  if (!list) {
+    console.log(`❌ Lista não encontrada: list-${mealName}`);
+    return;
+  }
   
   list.innerHTML=''; 
   const foods = state.meals[mealName] || [];
   
+  console.log(`📋 Renderizando ${foods.length} alimentos para ${mealName}`, foods);
+
   if (foods.length === 0) {
     list.innerHTML = `
       <div class="empty-meal">
@@ -127,10 +133,12 @@ export function renderMealList(mealName){
     return;
   }
   
-  foods.forEach(item=>{
-    // USAR foodData SE DISPONÍVEL, CASO CONTRÁRIO BUSCAR NO state.taco
-    const food = item.foodData || state.taco[item.id] || { 
-      name: 'Desconhecido', 
+  foods.forEach((item, index)=>{
+    console.log(`🍎 Processando alimento ${index}:`, item);
+    
+    // BUSCAR SEMPRE NO state.taco - não confiar em foodData
+    const food = state.taco[item.id] || { 
+      name: 'Alimento não encontrado', 
       calorias: 0, 
       proteina: 0, 
       carboidrato: 0, 
@@ -138,66 +146,72 @@ export function renderMealList(mealName){
       fibra: 0 
     };
     
+    console.log(`📊 Dados do alimento encontrado:`, food);
+    
     const row = document.createElement('div'); 
     row.className='food-item';
+    row.style.display = 'flex';
+    row.style.justifyContent = 'space-between';
+    row.style.alignItems = 'center';
+    row.style.padding = '12px';
+    row.style.background = '#f8fafc';
+    row.style.borderRadius = '8px';
+    row.style.marginBottom = '8px';
+    row.style.borderLeft = '4px solid #10b981';
+    
     const left = document.createElement('div'); 
     left.innerHTML = `
-      <div style="font-weight:600;color:var(--dark)">${food.name}</div>
-      <div style="font-size:12px;color:#334155">${item.qty} g</div>
+      <div style="font-weight:600;color:#1e293b">${food.name}</div>
+      <div style="font-size:12px;color:#475569">${item.qty} g</div>
     `;
     
     const right = document.createElement('div'); 
-    right.style.display='flex'; 
-    right.style.gap='8px'; 
-    right.style.alignItems='center';
+    right.style.display = 'flex'; 
+    right.style.gap = '12px'; 
+    right.style.alignItems = 'center';
     right.style.flexDirection = 'column';
     right.style.alignItems = 'flex-end';
     
     // Linha principal de nutrientes
     const nutrDiv = document.createElement('div'); 
-    nutrDiv.style.fontSize='12px'; 
-    nutrDiv.style.color='#0f172a';
+    nutrDiv.style.fontSize = '12px'; 
+    nutrDiv.style.color = '#0f172a';
     nutrDiv.style.textAlign = 'right';
     nutrDiv.innerHTML = `
-      <strong>Kcal ${formatNumber(calcScaled(food.calorias, item.qty),0)}</strong> • 
-      P ${formatNumber(calcScaled(food.proteina, item.qty))}g • 
-      C ${formatNumber(calcScaled(food.carboidrato, item.qty))}g • 
-      L ${formatNumber(calcScaled(food.lipidio, item.qty))}g
+      <strong>${formatNumber(calcScaled(food.calorias, item.qty),0)} kcal</strong> • 
+      P:${formatNumber(calcScaled(food.proteina, item.qty))}g • 
+      C:${formatNumber(calcScaled(food.carboidrato, item.qty))}g • 
+      L:${formatNumber(calcScaled(food.lipidio, item.qty))}g
     `;
     
     // Linha secundária com mais nutrientes
     const extraNutrDiv = document.createElement('div');
-    extraNutrDiv.style.fontSize='11px';
-    extraNutrDiv.style.color='#64748b';
+    extraNutrDiv.style.fontSize = '11px';
+    extraNutrDiv.style.color = '#64748b';
     extraNutrDiv.style.textAlign = 'right';
     
     const extraNutrients = [];
     if (food.fibra || food.fibra_alimentar) {
-      extraNutrients.push(`Fib ${formatNumber(calcScaled(food.fibra || food.fibra_alimentar, item.qty))}g`);
+      const fibraVal = food.fibra || food.fibra_alimentar;
+      extraNutrients.push(`Fib:${formatNumber(calcScaled(fibraVal, item.qty))}g`);
     }
     if (food.colesterol && calcScaled(food.colesterol, item.qty) > 0) {
-      extraNutrients.push(`Col ${formatNumber(calcScaled(food.colesterol, item.qty))}mg`);
+      extraNutrients.push(`Col:${formatNumber(calcScaled(food.colesterol, item.qty))}mg`);
     }
     if (food.sodio && calcScaled(food.sodio, item.qty) > 0) {
-      extraNutrients.push(`Na ${formatNumber(calcScaled(food.sodio, item.qty))}mg`);
-    }
-    if (food.potassio && calcScaled(food.potassio, item.qty) > 0) {
-      extraNutrients.push(`K ${formatNumber(calcScaled(food.potassio, item.qty))}mg`);
-    }
-    if (food.calcio && calcScaled(food.calcio, item.qty) > 0) {
-      extraNutrients.push(`Ca ${formatNumber(calcScaled(food.calcio, item.qty))}mg`);
-    }
-    if (food.ferro && calcScaled(food.ferro, item.qty) > 0) {
-      extraNutrients.push(`Fe ${formatNumber(calcScaled(food.ferro, item.qty))}mg`);
+      extraNutrients.push(`Na:${formatNumber(calcScaled(food.sodio, item.qty))}mg`);
     }
     
     extraNutrDiv.textContent = extraNutrients.join(' • ');
     
     const del = document.createElement('button'); 
-    del.className='btn btn-danger btn-sm'; 
-    del.textContent='Remover';
+    del.className = 'btn btn-danger btn-sm'; 
+    del.textContent = 'Remover';
+    del.style.padding = '4px 8px';
+    del.style.fontSize = '11px';
     del.onclick = ()=>{ 
-      state.meals[mealName] = state.meals[mealName].filter(i=>i!==item); 
+      console.log(`🗑️ Removendo alimento ${index} de ${mealName}`);
+      state.meals[mealName] = state.meals[mealName].filter((_, i) => i !== index);
       state.unsavedChanges = true; 
       renderMealList(mealName); 
       renderSummary(); 
@@ -219,12 +233,12 @@ export function renderMealList(mealName){
     totalsEl.innerHTML=''; 
     const sum = aggregateMeal(mealName);
     totalsEl.innerHTML = `
-      <div style="font-weight:600;color:#063970">
-        Totais: Kcal ${formatNumber(sum.calorias,0)} • 
-        P ${formatNumber(sum.proteina)}g • 
-        C ${formatNumber(sum.carboidrato)}g • 
-        L ${formatNumber(sum.lipidio)}g • 
-        Fib ${formatNumber(sum.fibra)}g
+      <div style="font-weight:600;color:#063970; padding: 8px; background: #dbeafe; border-radius: 6px; margin-top: 8px;">
+        🔍 Totais da refeição: ${formatNumber(sum.calorias,0)} kcal • 
+        P:${formatNumber(sum.proteina)}g • 
+        C:${formatNumber(sum.carboidrato)}g • 
+        L:${formatNumber(sum.lipidio)}g • 
+        Fib:${formatNumber(sum.fibra)}g
       </div>
     `;
   }
@@ -246,8 +260,9 @@ export function aggregateMeal(mealName){
   };
   
   foods.forEach(item=>{
-    // USAR foodData SE DISPONÍVEL, CASO CONTRÁRIO BUSCAR NO state.taco
-    const f = item.foodData || state.taco[item.id] || {};
+    const f = state.taco[item.id] || {};
+    console.log(`📊 Calculando totais para:`, f.name, 'Qtd:', item.qty);
+    
     total.calorias += calcScaled(f.calorias||0, item.qty);
     total.proteina += calcScaled(f.proteina||0, item.qty);
     total.carboidrato += calcScaled(f.carboidrato||0, item.qty);
@@ -258,15 +273,9 @@ export function aggregateMeal(mealName){
     total.potassio += calcScaled(f.potassio||0, item.qty);
     total.calcio += calcScaled(f.calcio||0, item.qty);
     total.ferro += calcScaled(f.ferro||0, item.qty);
-    
-    Object.keys(f).forEach(k=>{
-      if(!['id','name','calorias','proteina','carboidrato','lipidio','fibra','fibra_alimentar','colesterol','sodio','potassio','calcio','ferro'].includes(k)){
-        if(typeof f[k] === 'number'){
-          total[k] = (total[k] || 0) + calcScaled(f[k], item.qty);
-        }
-      }
-    });
   });
+  
+  console.log(`🧮 Totais calculados para ${mealName}:`, total);
   return total;
 }
 
@@ -288,13 +297,13 @@ export function aggregateAll(){
     const t = aggregateMeal(m);
     Object.keys(t).forEach(k=> total[k] = (total[k]||0) + t[k]);
   });
+  
+  console.log('📈 Totais gerais:', total);
   return total;
 }
 
 export function renderSummary(){
-  // Verificar se aplicação está pronta
   if (!isAppReady()) {
-    console.log('⏳ Aplicação ainda não carregou, aguardando renderização do resumo...');
     setTimeout(renderSummary, 100);
     return;
   }
@@ -302,41 +311,69 @@ export function renderSummary(){
   const details = document.getElementById('summaryDetails');
   const alerts = document.getElementById('alerts');
   
-  // Verificar se os elementos existem
   if (!details || !alerts) {
-    console.log('⏳ Elementos de resumo não encontrados...');
     return;
   }
   
   const sum = aggregateAll();
   details.innerHTML = `
-    <div style="min-width:140px"><strong>Calorias</strong><div style="font-size:16px;color:var(--dark)">${formatNumber(sum.calorias,0)} kcal</div></div>
-    <div style="min-width:120px"><strong>Proteínas</strong><div style="font-size:16px;color:#063970">${formatNumber(sum.proteina)} g</div></div>
-    <div style="min-width:120px"><strong>Carboidratos</strong><div style="font-size:16px;color:#063970">${formatNumber(sum.carboidrato)} g</div></div>
-    <div style="min-width:120px"><strong>Lipídios</strong><div style="font-size:16px;color:#063970">${formatNumber(sum.lipidio)} g</div></div>
-    <div style="min-width:120px"><strong>Fibras</strong><div style="font-size:16px;color:#063970">${formatNumber(sum.fibra)} g</div></div>
-    ${sum.colesterol > 0 ? `<div style="min-width:120px"><strong>Colesterol</strong><div style="font-size:14px;color:#475569">${formatNumber(sum.colesterol)} mg</div></div>` : ''}
-    ${sum.sodio > 0 ? `<div style="min-width:120px"><strong>Sódio</strong><div style="font-size:14px;color:#475569">${formatNumber(sum.sodio)} mg</div></div>` : ''}
-    ${sum.potassio > 0 ? `<div style="min-width:120px"><strong>Potássio</strong><div style="font-size:14px;color:#475569">${formatNumber(sum.potassio)} mg</div></div>` : ''}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; width: 100%;">
+      <div style="text-align: center; padding: 12px; background: #1e40af; color: white; border-radius: 8px;">
+        <div style="font-size: 12px; opacity: 0.9;">Calorias</div>
+        <div style="font-size: 18px; font-weight: bold;">${formatNumber(sum.calorias,0)}</div>
+        <div style="font-size: 11px;">kcal</div>
+      </div>
+      <div style="text-align: center; padding: 12px; background: #2563eb; color: white; border-radius: 8px;">
+        <div style="font-size: 12px; opacity: 0.9;">Proteínas</div>
+        <div style="font-size: 18px; font-weight: bold;">${formatNumber(sum.proteina)}</div>
+        <div style="font-size: 11px;">gramas</div>
+      </div>
+      <div style="text-align: center; padding: 12px; background: #3b82f6; color: white; border-radius: 8px;">
+        <div style="font-size: 12px; opacity: 0.9;">Carboidratos</div>
+        <div style="font-size: 18px; font-weight: bold;">${formatNumber(sum.carboidrato)}</div>
+        <div style="font-size: 11px;">gramas</div>
+      </div>
+      <div style="text-align: center; padding: 12px; background: #60a5fa; color: white; border-radius: 8px;">
+        <div style="font-size: 12px; opacity: 0.9;">Lipídios</div>
+        <div style="font-size: 18px; font-weight: bold;">${formatNumber(sum.lipidio)}</div>
+        <div style="font-size: 11px;">gramas</div>
+      </div>
+      <div style="text-align: center; padding: 12px; background: #93c5fd; color: #1e293b; border-radius: 8px;">
+        <div style="font-size: 12px; opacity: 0.9;">Fibras</div>
+        <div style="font-size: 18px; font-weight: bold;">${formatNumber(sum.fibra)}</div>
+        <div style="font-size: 11px;">gramas</div>
+      </div>
+    </div>
   `;
 
-  // floating Save Diet button (visible only when editingDiet is set)
+  // Botão flutuante de salvar dieta
   let floating = document.getElementById('saveDietFloating');
   if(!floating){
     floating = document.createElement('button');
     floating.id = 'saveDietFloating';
-    floating.textContent = 'Salvar Dieta';
+    floating.textContent = '💾 Salvar Dieta';
     floating.className = 'btn btn-success';
-    floating.onclick = ()=> saveEditingDiet();
+    floating.style.position = 'fixed';
+    floating.style.bottom = '20px';
+    floating.style.right = '20px';
+    floating.style.zIndex = '1000';
+    floating.style.padding = '12px 20px';
+    floating.style.fontSize = '14px';
+    floating.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    floating.onclick = ()=> {
+      console.log('💾 Clicou para salvar dieta');
+      saveEditingDiet();
+    };
     document.body.appendChild(floating);
   }
+  
   if(state.currentPatient){
     floating.style.display = 'inline-block';
   }else{
     floating.style.display = 'none';
   }
 
-  // save session button (when a patient is selected and not editing an existing diet)
+  // Botão salvar sessão atual
   const controls = document.querySelector('.summary .controls') || document.querySelector('.controls');
   if(controls){
     let saveSessionMain = document.getElementById('saveSessionMainBtn');
@@ -351,8 +388,8 @@ export function renderSummary(){
           alert('Selecione primeiro um paciente para salvar a sessão como dieta.');
           return;
         }
+        console.log('💾 Salvando sessão atual como dieta...');
         saveCurrentSessionAsDiet(state.currentPatient.id);
-        renderSummary();
       };
       controls.insertBefore(saveSessionMain, controls.firstChild);
     }
@@ -364,46 +401,59 @@ export function renderSummary(){
   }
 
   alerts.innerHTML=''; 
-  if(sum.proteina < 50) addAlert('Baixa ingestão de proteínas.');
-  if(sum.carboidrato > 350) addAlert('Excesso de carboidratos.');
-  if(sum.calorias > 3000) addAlert('Calorias acima do recomendado.');
-  if(sum.fibra < 25) addAlert('Fibras insuficientes.');
-  if(sum.sodio > 2300) addAlert('Sódio acima do recomendado.');
-  if(sum.colesterol > 300) addAlert('Colesterol acima do recomendado.');
+  if(sum.proteina < 50) addAlert('⚡ Baixa ingestão de proteínas.');
+  if(sum.carboidrato > 350) addAlert('🍚 Excesso de carboidratos.');
+  if(sum.calorias > 3000) addAlert('🔥 Calorias acima do recomendado.');
+  if(sum.fibra < 25) addAlert('🥬 Fibras insuficientes.');
+  if(sum.sodio > 2300) addAlert('🧂 Sódio acima do recomendado.');
+  if(sum.colesterol > 300) addAlert('❤️ Colesterol acima do recomendado.');
   
   MEALS.forEach(m=>{
-    if((state.meals[m] || []).length===0) addAlert(`Refeição vazia: ${m}`);
+    if((state.meals[m] || []).length===0) addAlert(`🍽️ Refeição vazia: ${m}`);
   });
   
   function addAlert(text){
     const a = document.createElement('div'); 
     a.className='alert alert-warning'; 
+    a.style.display = 'flex';
+    a.style.alignItems = 'center';
+    a.style.gap = '8px';
+    a.style.marginBottom = '8px';
     a.textContent=text;
     alerts.appendChild(a);
   }
 }
 
-// wire some global buttons and initial render - AGORA CONTROLADO PELO APP PRINCIPAL
 export function initUI() {
   console.log('🎨 Inicializando UI...');
   
   const exportBtn = document.getElementById('exportPdfBtn');
-  if(exportBtn) exportBtn.addEventListener('click', savePatientToPdfContext);
+  if(exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      console.log('📄 Exportando PDF...');
+      savePatientToPdfContext();
+    });
+  }
   
   const clearBtn = document.getElementById('clearBtn');
-  if(clearBtn) clearBtn.addEventListener('click', ()=>{
-    if(!confirm('Limpar todas as refeições?')) return;
-    MEALS.forEach(m=> state.meals[m]=[]);
-    state.unsavedChanges = true;
-    renderMeals();
-  });
+  if(clearBtn) {
+    clearBtn.addEventListener('click', ()=>{
+      if(!confirm('Limpar todas as refeições? Esta ação não pode ser desfeita.')) return;
+      console.log('🗑️ Limpando todas as refeições...');
+      MEALS.forEach(m=> state.meals[m]=[]);
+      state.unsavedChanges = true;
+      renderMeals();
+    });
+  }
 
-  // state header updater (keeps header consistent)
+  // Atualizar header do paciente
   setInterval(()=>{
     const obs = document.getElementById('patientDisplay');
     if(!obs) return;
     if(state.unsavedChanges){
-      if(!obs.textContent.includes(' • Alterações não salvas')) obs.textContent = (state.currentPatient?.nome? `${state.currentPatient.nome} — ${state.currentDiet ? state.currentDiet.name||'' : ''}`.trim() : '— nenhum paciente selecionado —') + ' • Alterações não salvas';
+      if(!obs.textContent.includes(' • Alterações não salvas')) {
+        obs.textContent = (state.currentPatient?.nome? `${state.currentPatient.nome} — ${state.currentDiet ? state.currentDiet.name||'' : ''}`.trim() : '— nenhum paciente selecionado —') + ' • ⚡ Alterações não salvas';
+      }
     }else{
       if(state.currentPatient && state.currentPatient.nome){
         obs.textContent = state.currentDiet ? `${state.currentPatient.nome} — ${state.currentDiet.name||''}` : `${state.currentPatient.nome} — ${state.currentPatient.objetivo||''}`;
@@ -413,7 +463,7 @@ export function initUI() {
     }
   },500);
 
-  // Renderizar inicialmente apenas se app estiver pronto
+  // Renderizar inicialmente
   if (isAppReady()) {
     renderMeals();
   } else {
